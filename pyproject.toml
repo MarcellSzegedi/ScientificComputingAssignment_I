@@ -28,6 +28,11 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.pyright]
+# Makes sure that Henry's editor (neovim) can see the uv virtual environment
+venvPath = "."
+venv = ".venv"
+
 [tool.ruff.lint]
 # Ruff (code linting + formatting) rules. Can add/remove.
 select = [
