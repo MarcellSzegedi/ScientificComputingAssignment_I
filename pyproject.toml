@@ -1,11 +1,15 @@
 [project]
+# Project metadata. This is what people would see if project 
+#   was on PyPI.
 name = "scientific-computing"
 version = "0.1.0"
-description = "Add your description here"
+description = "Project code for Scientific Computing Assignment 1"
 readme = "README.md"
 authors = [
     { name = "Henry Zwart", email = "henrybzwart@gmail.com" },
 ]
+
+# Defining the requirements for running the project.
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10.0",
@@ -25,6 +29,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff.lint]
+# Ruff (code linting + formatting) rules. Can add/remove.
 select = [
     # pydocstyle
     #"D", # uncomment to check code for docstrings
