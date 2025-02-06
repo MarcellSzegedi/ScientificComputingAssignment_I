@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "Henry Zwart", email = "henrybzwart@gmail.com" }
+    { name = "Henry Zwart", email = "henrybzwart@gmail.com" },
 ]
 requires-python = ">=3.13"
 dependencies = [
@@ -16,6 +16,8 @@ dependencies = [
 ]
 
 [project.scripts]
+# Commented out as this doesn't exist, but leaving 
+#   here in case we add a CLI or other entrypoint.
 #code = "code:main"
 
 [build-system]
