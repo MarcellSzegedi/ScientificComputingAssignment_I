@@ -1,0 +1,1 @@
+LATTICE_LENGTH = 1
