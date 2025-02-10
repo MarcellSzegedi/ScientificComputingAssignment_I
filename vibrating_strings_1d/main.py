@@ -2,7 +2,7 @@ from vibrating_strings_1d.utils.constants import c, dt, dx, TIME_STEPS, SPATIAL_
 from vibrating_strings_1d.utils.grid_initialisation import initialize_grid
 
 
-def discretize_pde(case: int):
+def discretize_pde():
     """
     Discretizes the second order vibration PDE in order to solve numerically.
     :return: Computed wave grid over time.
@@ -19,5 +19,5 @@ def discretize_pde(case: int):
 
 if __name__ == "__main__":
     case = 1
-    result = discretize_PDE(case)
+    result = discretize_pde()
     print("Simulation complete. Grid: ", result)
