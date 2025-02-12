@@ -1,6 +1,6 @@
 import numpy as np
 
-from stationary_diffusion.utils.constants import LATTICE_LENGTH
+from .constants import LATTICE_LENGTH
 
 
 def initialize_grid(delta: float) -> np.ndarray:

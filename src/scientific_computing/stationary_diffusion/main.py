@@ -1,8 +1,8 @@
 import numpy as np
 
-from stationary_diffusion.iteration_techniques.jacobi_iteration import jacobi_iteration
-from stationary_diffusion.utils.common_functions import reset_grid_wrapping
-from stationary_diffusion.utils.grid_initialisation import initialize_grid
+from .iteration_techniques.jacobi_iteration import jacobi_iteration
+from .utils.common_functions import reset_grid_wrapping
+from .utils.grid_initialisation import initialize_grid
 
 
 def main(
