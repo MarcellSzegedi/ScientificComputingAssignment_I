@@ -1,17 +1,22 @@
 import pytest
-
 from hypothesis import given
-from hypothesis.strategies import integers, floats
+from hypothesis.strategies import floats, integers
 
-from time_dependent_diffusion.utils.time_dependent_diffusion import time_dependent_diffusion
+from time_dependent_diffusion.utils.time_dependent_diffusion import (
+    time_dependent_diffusion,
+)
 
-@given(intervals = integers(min_value=1, max_value=10),
-       time_steps = integers(min_value=1, max_value=1000),
-       dt = floats(min_value=0, max_value=1, allow_nan = False, allow_infinity = False),
-       D = floats(min_value=0, allow_nan = False, allow_infinity = False))
+
+@given(
+    intervals=integers(min_value=1, max_value=10),
+    time_steps=integers(min_value=1, max_value=1000),
+    dt=floats(min_value=0, max_value=1, allow_nan=False, allow_infinity=False),
+    D=floats(min_value=0, allow_nan=False, allow_infinity=False),
+)
 def test_grid_shape(time_steps, intervals, dt, D):
     grid = time_dependent_diffusion(time_steps, intervals, dt, D)
     assert grid.shape == (intervals, intervals)
+
 
 def test_diffusion_ttime_steps_and_intervals_less_than_one():
     with pytest.raises(ValueError):

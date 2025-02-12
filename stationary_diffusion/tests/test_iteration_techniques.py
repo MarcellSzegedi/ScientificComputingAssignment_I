@@ -2,8 +2,9 @@ import unittest
 
 import numpy as np
 
-from stationary_diffusion.utils.grid_initialisation import initialize_grid
 from stationary_diffusion.iteration_techniques.jacobi_iteration import jacobi_iteration
+from stationary_diffusion.utils.grid_initialisation import initialize_grid
+
 
 class TestJacobiIteration(unittest.TestCase):
     def test_output_shape(self):

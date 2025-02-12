@@ -5,9 +5,10 @@ from stationary_diffusion.utils.constants import LATTICE_LENGTH
 
 def initialize_grid(delta: float) -> np.ndarray:
     """
-    Creates a grid (2D numpy array) where every value if going to represent a delta time step in the
-    corresponding measure (in this case distance along x and y coordinates) from the previous value. The 'previous'
-    values are in the left and down directions, while the 'future' values ind the right and up directions.
+    Creates a grid (2D numpy array) where every value if going to represent a delta
+    time step in the corresponding measure (in this case distance along x and y
+    coordinates) from the previous value. The 'previous' values are in the left and
+    down directions, while the 'future' values ind the right and up directions.
 
     Args:
         delta: (float) The length of discretization step of the continuous field.
@@ -50,7 +51,8 @@ def create_grid(grid_size: int) -> np.ndarray:
 
 def _calc_grid_size(delta: float) -> int:
     """
-    Calculates the size of the grid based on the given value of the length of the discretization step (delta).
+    Calculates the size of the grid based on the given value of the length of the
+    discretization step (delta).
 
     Args:
         delta: (float) The length of discretization step of the continuous field.
@@ -59,9 +61,11 @@ def _calc_grid_size(delta: float) -> int:
         The size of the grid
 
     """
-    return (int(LATTICE_LENGTH // delta)
-            if LATTICE_LENGTH / delta == LATTICE_LENGTH // delta
-            else int(LATTICE_LENGTH // delta + 1))
+    return (
+        int(LATTICE_LENGTH // delta)
+        if LATTICE_LENGTH / delta == LATTICE_LENGTH // delta
+        else int(LATTICE_LENGTH // delta + 1)
+    )
 
 
 def _check_delta_param(delta: float) -> None:
@@ -75,4 +79,6 @@ def _check_delta_param(delta: float) -> None:
         None
     """
     if delta > LATTICE_LENGTH / 3:
-        raise ValueError("The delta parameter would NOT produce at least a 3 by 3 grid.")
+        raise ValueError(
+            "The delta parameter would NOT produce at least a 3 by 3 grid."
+        )

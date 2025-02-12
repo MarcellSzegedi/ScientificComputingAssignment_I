@@ -1,7 +1,5 @@
 import numpy as np
 
-from vibrating_strings_1d.utils.constants import LATTICE_LENGTH, SPATIAL_POINTS, TIME_STEPS
-
 
 def initialize_string(spatial_intervals: int, time_steps: int, case: int):
     """
@@ -18,6 +16,7 @@ def initialize_string(spatial_intervals: int, time_steps: int, case: int):
         return np.sin(5 * np.pi * x)
     elif case == 3:
         return np.where((x > 1 / 5) & (x < 2 / 5), np.sin(5 * np.pi * x), 0)
+
 
 def initialize_grid(spatial_intervals: int, time_steps: int, case: int):
     """

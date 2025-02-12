@@ -1,6 +1,5 @@
-#from vibrating_strings_1d.utils.constants import c, dt, dx, TIME_STEPS, SPATIAL_POINTS
+# from vibrating_strings_1d.utils.constants import c, dt, dx, TIME_STEPS, SPATIAL_POINTS
 from vibrating_strings_1d.utils.animation import animate_wave
-
 
 if __name__ == "__main__":
     case = 1
