@@ -1,8 +1,9 @@
 import pytest
-from hypothesis import given
+from hypothesis import assume, given
 from hypothesis.strategies import floats, integers
 
 from scientific_computing.time_dependent_diffusion.utils import (
+    is_stable_scheme,
     time_dependent_diffusion,
 )
 
@@ -14,6 +15,7 @@ from scientific_computing.time_dependent_diffusion.utils import (
     D=floats(min_value=0, allow_nan=False, allow_infinity=False),
 )
 def test_grid_shape(time_steps, intervals, dt, D):
+    assume(is_stable_scheme(dt, 1 / intervals, D))
     grid, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
     assert grid.shape == (intervals, intervals)
 
