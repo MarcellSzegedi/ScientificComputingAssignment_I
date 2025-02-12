@@ -32,8 +32,6 @@ def create_grid(grid_size: int) -> np.ndarray:
     Create a grid based on the following rules:
     - Every value in the grid is set to 0
     - Wrap the top with ones
-    - Wrap the bottom with zeros
-    _ Wrap the left and right with each other
 
     Args:
         grid_size: (int) size of the grid.
@@ -74,7 +72,7 @@ def _check_delta_param(delta: float) -> None:
         delta: (float) The length of discretization step of the continuous field.
 
     Returns:
-        True if the delta parameter meets with the requirements, False otherwise.
+        None
     """
     if delta > LATTICE_LENGTH / 3:
         raise ValueError("The delta parameter would NOT produce at least a 3 by 3 grid.")
