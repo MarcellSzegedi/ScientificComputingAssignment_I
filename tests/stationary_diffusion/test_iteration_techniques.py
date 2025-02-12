@@ -2,8 +2,12 @@ import unittest
 
 import numpy as np
 
-from stationary_diffusion.iteration_techniques.jacobi_iteration import jacobi_iteration
-from stationary_diffusion.utils.grid_initialisation import initialize_grid
+from scientific_computing.stationary_diffusion.iteration_techniques import (
+    jacobi_iteration,
+)
+from scientific_computing.stationary_diffusion.utils import (
+    initialize_grid,
+)
 
 
 class TestJacobiIteration(unittest.TestCase):

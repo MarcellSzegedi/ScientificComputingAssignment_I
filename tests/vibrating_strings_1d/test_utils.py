@@ -2,7 +2,9 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import integers
 
-from vibrating_strings_1d.utils.grid_initialisation import initialize_grid
+from scientific_computing.vibrating_strings_1d.utils.grid_initialisation import (
+    initialize_grid,
+)
 
 
 @given(

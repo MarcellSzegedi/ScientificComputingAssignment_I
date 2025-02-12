@@ -1,6 +1,6 @@
 import numpy as np
 
-from stationary_diffusion.utils.constants import TOLERANCE as tol
+from scientific_computing.stationary_diffusion.utils.constants import TOLERANCE as tol
 
 
 def jacobi_iteration(grid: np.ndarray):
