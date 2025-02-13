@@ -1,6 +1,6 @@
 import numpy as np
 
-from scientific_computing.example import my_func
+from src.scientific_computing.example import my_func
 
 
 def test_my_func():

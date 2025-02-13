@@ -1,6 +1,7 @@
 import numpy as np
 
-from .constants import LATTICE_LENGTH
+
+LATTICE_LENGTH = 1.0
 
 
 def initialize_grid(delta: float) -> np.ndarray:

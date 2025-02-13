@@ -1,6 +1,7 @@
 import numpy as np
 
-from scientific_computing.stationary_diffusion.utils.constants import TOLERANCE as tol
+
+TOLERANCE = 1e-5
 
 
 def jacobi_iteration(grid: np.ndarray, iters: int):
@@ -26,7 +27,7 @@ def jacobi_iteration(grid: np.ndarray, iters: int):
                     + old_grid[i, j - 1]
                 )
         max_diff = np.max(np.abs(new_grid - old_grid))
-        if max_diff < tol:
+        if max_diff < TOLERANCE:
             break
     return new_grid, max_diff
 
