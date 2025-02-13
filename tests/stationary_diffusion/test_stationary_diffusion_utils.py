@@ -6,10 +6,11 @@ import numpy.testing as npt
 from scientific_computing.stationary_diffusion.utils.common_functions import (
     reset_grid_wrapping,
 )
-from scientific_computing.stationary_diffusion.utils.constants import LATTICE_LENGTH
 from scientific_computing.stationary_diffusion.utils.grid_initialisation import (
     initialize_grid,
 )
+
+LATTICE_LENGTH = 1.0
 
 
 class TestGridInitialisation(unittest.TestCase):
