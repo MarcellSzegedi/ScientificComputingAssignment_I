@@ -1,5 +1,5 @@
-from vibrating_strings_1d.utils.constants import c, dt, dx
-from vibrating_strings_1d.utils.grid_initialisation import initialize_grid
+from .constants import c, dt, dx
+from .grid_initialisation import initialize_grid
 
 
 def discretize_pde(spatial_intervals: int, time_steps: int, case: int):

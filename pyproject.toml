@@ -18,12 +18,11 @@ dependencies = [
     "numpy>=2.1.3",
     "pytest>=8.3.4",
     "scipy>=1.15.1",
+    "typer>=0.15.1",
 ]
 
 [project.scripts]
-# Commented out as this doesn't exist, but leaving 
-#   here in case we add a CLI or other entrypoint.
-#code = "code:main"
+scicomp = "scientific_computing.cli:app"
 
 [build-system]
 requires = ["hatchling"]

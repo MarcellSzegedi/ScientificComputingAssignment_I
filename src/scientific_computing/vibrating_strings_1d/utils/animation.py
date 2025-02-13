@@ -1,7 +1,8 @@
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-from vibrating_strings_1d.utils.discretize_pde import discretize_pde
+
+from .discretize_pde import discretize_pde
 
 
 def animate_wave(spatial_intervals, time_steps, case, frame_rate: int):
