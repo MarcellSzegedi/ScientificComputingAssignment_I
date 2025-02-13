@@ -7,6 +7,12 @@ import typer
 
 from scientific_computing.time_dependent_diffusion import one_step_diffusion
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
+from scientific_computing.vibrating_strings_1d.utils.discretize_pde import (
+    discretize_pde,
+)
+from scientific_computing.vibrating_strings_1d.utils.grid_initialisation import (
+    Initialisation,
+)
 
 DPI = 500
 
@@ -33,6 +39,72 @@ app.add_typer(td_diffusion)
 def hello(name: str):
     """Prints 'Hello <NAME>'."""
     print(f"Hello {name}.")
+
+
+@vibrating_string.command(name="plot")
+def plot_vibrating_string(
+    measurements: Annotated[
+        list[int],
+        typer.Option("--measurement", "-m", help="Timepoints to plot system state."),
+    ],
+    velocity: Annotated[
+        float, typer.Option("--velocity", "-c", help="Propagation velocity.")
+    ],
+    length: Annotated[
+        int, typer.Option("--length", "-s", help="Length of the string (L).")
+    ] = 1,
+    initialisation: Annotated[
+        Initialisation, typer.Option("--init", "-i", help="Initial conditions.")
+    ] = Initialisation.LowFreq,
+    dt: Annotated[
+        float,
+        typer.Option(help="Step size in temporal dimension.", min=1e-6),
+    ] = 0.001,
+    dx: Annotated[
+        float,
+        typer.Option(
+            help="Step size in spatial dimension. Must divide the string length.",
+            min=1e-6,
+        ),
+    ] = 0.01,
+    save_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--save-path",
+            "-o",
+            help="Filepath to save plot to (including extension)",
+        ),
+    ] = None,
+):
+    measurements = sorted(list(set(measurements)))
+    if not measurements:
+        raise ValueError("Measurements list should be non-empty.")
+
+    spatial_intervals = int(length / dx)
+    timesteps = max(measurements) + 1
+    runtime = timesteps * dt
+    result = discretize_pde(
+        spatial_intervals, timesteps, length, runtime, velocity, initialisation
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 5), layout="constrained")
+    string_points = np.linspace(0, length, spatial_intervals + 1)
+    for frame in measurements:
+        ax.plot(string_points, result[frame], label=f"t={frame * dt:.2f}")
+    ax.set_xlabel(r"$x$")
+    ax.set_ylabel(r"$\Psi(x, t)$")
+    ax.set_title(
+        f"1D wave amplitude at varying times, c={velocity:.2f}, "
+        f"{initialisation} initialisation"
+    )
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.legend()
+
+    if save_path:
+        fig.savefig(save_path, dpi=500)
+    else:
+        plt.show()
 
 
 @vibrating_string.command(name="animate")

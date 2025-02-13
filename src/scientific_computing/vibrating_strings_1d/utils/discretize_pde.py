@@ -1,4 +1,4 @@
-from .grid_initialisation import initialize_grid
+from .grid_initialisation import Initialisation, initialize_grid
 
 
 def discretize_pde(
@@ -7,7 +7,7 @@ def discretize_pde(
     string_length: float,
     runtime: float,
     c: float,
-    case: int,
+    case: Initialisation,
 ):
     """
     Discretizes the second order vibration PDE in order to solve numerically.
