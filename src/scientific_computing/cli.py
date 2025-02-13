@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 import matplotlib.pyplot as plt
 import typer
@@ -27,14 +28,56 @@ def hello(name: str):
 
 @vibrating_string.command(name="animate")
 def animate_vibrating_string(
-    case: int = 1,
-    spatial_intervals: int = 50,
-    temporal_intervals: int = 100,
-    runtime: float = 15.0,
-    string_length: float = 1.0,
-    propagation_velocity: float = 1.0,
-    save_path: Path | None = None,
-    framerate: int = 5,
+    case: Annotated[int, typer.Option(help="String initialisation")] = 1,
+    spatial_intervals: Annotated[
+        int,
+        typer.Option(
+            "--spatial-intervals",
+            "-si",
+            help="Number of intervals to split spatial dimension.",
+        ),
+    ] = 50,
+    temporal_intervals: Annotated[
+        int,
+        typer.Option(
+            "--temporal-intervals",
+            "-ti",
+            help="Number of intervals to split time dimension.",
+        ),
+    ] = 100,
+    runtime: Annotated[
+        float,
+        typer.Option(
+            "--runtime",
+            "-t",
+            help="Clock time length of simulation. Equal to temporal intervals * dt",
+        ),
+    ] = 15.0,
+    string_length: Annotated[
+        float,
+        typer.Option(
+            "--string-length",
+            "-s",
+            help="Length of the string. Equal to spatial intervals * ds",
+        ),
+    ] = 1.0,
+    propagation_velocity: Annotated[
+        float, typer.Option("-c", help="Propagation velocity")
+    ] = 1.0,
+    save_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--save-path",
+            "-o",
+            help="Filepath to save animation to (including extension)",
+        ),
+    ] = None,
+    framerate: Annotated[
+        int,
+        typer.Option(
+            "--framerate", help="Number of frames to show per second in the animation"
+        ),
+    ] = 5,
 ):
     """Animate a 1D vibrating string."""
     animation = animate_wave(
