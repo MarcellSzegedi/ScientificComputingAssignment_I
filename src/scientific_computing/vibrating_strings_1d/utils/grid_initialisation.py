@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def initialize_string(spatial_intervals: int, time_steps: int, case: int):
+def initialize_string(spatial_intervals: int, case: int, string_length: int = 1):
     """
     Initializes the starting wave of the string with the following three cases.
         i. Ψ(x, t = 0) = sin(2πx).
@@ -9,7 +9,7 @@ def initialize_string(spatial_intervals: int, time_steps: int, case: int):
         iii. Ψ(x, t = 0) = sin(5πx) if 1/5 < x < 2/5, else Ψ = 0.
     :return: Array representing the initial wave shape.
     """
-    x = np.linspace(0, time_steps, spatial_intervals + 1)
+    x = np.linspace(0, string_length, spatial_intervals + 1)
     if case == 1:
         return np.sin(2 * np.pi * x)
     elif case == 2:
@@ -27,6 +27,6 @@ def initialize_grid(spatial_intervals: int, time_steps: int, case: int):
         raise ValueError("Time steps must be greater than 2.")
 
     grid = np.zeros((time_steps, spatial_intervals + 1))
-    grid[0] = initialize_string(spatial_intervals, time_steps, case)
+    grid[0] = initialize_string(spatial_intervals, case)
     grid[1] = grid[0]
     return grid

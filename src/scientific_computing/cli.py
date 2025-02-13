@@ -27,14 +27,25 @@ def hello(name: str):
 
 @vibrating_string.command(name="animate")
 def animate_vibrating_string(
-    case: int,
-    intervals: int,
-    timesteps: int,
+    case: int = 1,
+    spatial_intervals: int = 50,
+    temporal_intervals: int = 100,
+    runtime: float = 15.0,
+    string_length: float = 1.0,
+    propagation_velocity: float = 1.0,
     save_path: Path | None = None,
     framerate: int = 5,
 ):
     """Animate a 1D vibrating string."""
-    animation = animate_wave(intervals, timesteps, case, framerate)
+    animation = animate_wave(
+        spatial_intervals=spatial_intervals,
+        time_steps=temporal_intervals,
+        runtime=runtime,
+        string_length=string_length,
+        propagation_velocity=propagation_velocity,
+        case=case,
+        frame_rate=framerate,
+    )
     if save_path is not None:
         animation.save(save_path)
     else:

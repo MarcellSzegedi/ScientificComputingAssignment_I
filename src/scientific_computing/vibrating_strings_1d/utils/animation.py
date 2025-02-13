@@ -5,15 +5,30 @@ import numpy as np
 from .discretize_pde import discretize_pde
 
 
-def animate_wave(spatial_intervals, time_steps, case, frame_rate: int):
+def animate_wave(
+    spatial_intervals,
+    time_steps,
+    runtime: float,
+    case: int,
+    string_length: float = 1.0,
+    frame_rate: int = 5,
+    propagation_velocity: float = 1.0,
+):
     """
 
     :return:
     """
-    result = discretize_pde(spatial_intervals, time_steps, case)
+    result = discretize_pde(
+        spatial_intervals,
+        time_steps,
+        string_length,
+        runtime,
+        propagation_velocity,
+        case,
+    )
 
     fig, ax = plt.subplots()
-    x_axis = np.arange(result.shape[1])
+    x_axis = np.linspace(0, string_length, spatial_intervals + 1)
 
     (plot_axis,) = ax.plot(x_axis, result[0])
 
