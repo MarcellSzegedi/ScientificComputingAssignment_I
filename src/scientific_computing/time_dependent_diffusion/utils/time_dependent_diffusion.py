@@ -82,11 +82,3 @@ def plot_solution_comparison(dt: float, time_steps: int, intervals: int, terms: 
         ax.set_ylabel("Concentration (c)")
         ax.legend()
     plt.show()
-
-
-if __name__ == "__main__":
-    time_steps = 1000
-    intervals = 10
-    dt = 0.001
-    terms = 100
-    plot_solution_comparison(dt, time_steps, intervals, terms)
