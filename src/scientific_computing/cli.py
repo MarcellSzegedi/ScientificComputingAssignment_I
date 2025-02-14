@@ -4,6 +4,9 @@ from typing import Annotated
 import matplotlib.pyplot as plt
 import typer
 
+from scientific_computing.time_dependent_diffusion.utils.diffusion_sim import (
+    plot_solution_comparison,
+)
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
 
 app = typer.Typer(
@@ -24,6 +27,30 @@ app.add_typer(vibrating_string)
 def hello(name: str):
     """Prints 'Hello <NAME>'."""
     print(f"Hello {name}.")
+
+
+@app.command()
+def plot_time_dependent_diffusion_solution(
+    time_steps: Annotated[
+        int, typer.Option("--time-steps", "-ts", help="Number of time steps")
+    ] = 1000,
+    intervals: Annotated[
+        int,
+        typer.Option(
+            "--intervals", "-i", help="Number of intervals to split spatial dimension,"
+        ),
+    ] = 50,
+    dt: Annotated[float, typer.Option("--dt", "-dt", help="Time step size")] = 0.0001,
+    terms: Annotated[
+        int,
+        typer.Option(
+            "--terms",
+            "-t",
+            help="Number of terms to sum to approximate the analytical solution",
+        ),
+    ] = 100,
+):
+    plot_solution_comparison(dt, time_steps, intervals, terms)
 
 
 @vibrating_string.command(name="animate")
