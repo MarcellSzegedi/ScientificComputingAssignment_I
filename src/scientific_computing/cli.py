@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
-from scientific_computing.time_dependent_diffusion import one_step_diffusion
+from scientific_computing.time_dependent_diffusion import (
+    one_step_diffusion,
+    plot_solution_comparison,
+)
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
 
 DPI = 500
@@ -173,6 +176,21 @@ def plot_timesteps(
         fig.savefig(save_path, dpi=DPI)
     else:
         plt.show()
+
+
+@td_diffusion.command(name="compare")
+def compare_simulation_to_analytical(
+    dt: Annotated[float, typer.Option(help="Time step size")] = 0.001,
+    time_steps: Annotated[
+        int, typer.Option(help="Number of time steps in the simulation")
+    ] = 1000,
+    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 10,
+    terms: Annotated[
+        int, typer.Option(help="Number of terms to use in analytical solution")
+    ] = 100,
+):
+    """Plot simulation vs analytical solution for time dependent diffusion."""
+    plot_solution_comparison(dt, time_steps, intervals, terms)
 
 
 if __name__ == "__main__":
