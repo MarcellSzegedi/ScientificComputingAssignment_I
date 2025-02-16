@@ -6,7 +6,7 @@ import numpy as np
 import typer
 
 from scientific_computing.time_dependent_diffusion import (
-    one_step_diffusion,
+    one_step_diffusion_numba,
     plot_solution_comparison,
 )
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
@@ -232,6 +232,7 @@ def plot_timesteps(
     spatial_intervals = int(width / dx)
     grid = np.zeros((spatial_intervals, spatial_intervals), dtype=np.float64)
     grid[0] = 1
+    buffer = np.zeros((spatial_intervals, spatial_intervals), dtype=np.float64)
 
     ncol = 2
     nrow = len(measurements) // ncol + len(measurements) % ncol
@@ -244,7 +245,7 @@ def plot_timesteps(
                 grid, extent=[0, width, 0, width], vmin=0, vmax=1
             )
             next_measure_idx += 1
-        grid = one_step_diffusion(grid, dt, dx, diffusivity)
+        grid = one_step_diffusion_numba(grid, buffer, dt, dx, diffusivity)
 
     if save_path:
         fig.savefig(save_path, dpi=DPI)
