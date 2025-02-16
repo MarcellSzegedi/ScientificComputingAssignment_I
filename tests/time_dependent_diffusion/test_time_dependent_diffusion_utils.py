@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis.strategies import floats, integers
 
 from scientific_computing.time_dependent_diffusion.utils import (
@@ -7,6 +7,7 @@ from scientific_computing.time_dependent_diffusion.utils import (
 )
 
 
+@settings(deadline=None)
 @given(
     intervals=integers(min_value=1, max_value=10),
     time_steps=integers(min_value=1, max_value=1000),

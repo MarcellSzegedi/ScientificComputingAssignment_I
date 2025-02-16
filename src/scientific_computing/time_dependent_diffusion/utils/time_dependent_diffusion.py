@@ -1,11 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from numba import njit
 from scipy.special import erfc
 
 
-def one_step_diffusion(grid: npt.NDArray[np.float64], dt: float, dx: float, D: float):
-    new_grid = grid.copy()
+@njit
+def one_step_diffusion(
+    grid: npt.NDArray[np.float64],
+    buffer: npt.NDArray[np.float64],
+    dt: float,
+    dx: float,
+    D: float,
+):
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):
         for j in range(0, grid.shape[1]):
@@ -17,11 +24,16 @@ def one_step_diffusion(grid: npt.NDArray[np.float64], dt: float, dx: float, D: f
                 - 4 * grid[i, j]  # Self
             )
 
-            new_grid[i, j] = grid[i, j] + diffusion_coeff * neighbor_concentration_diff
-            grid[i, j] = new_grid[i, j]
-    return new_grid
+            buffer[i, j] = grid[i, j] + diffusion_coeff * neighbor_concentration_diff
+
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            grid[i, j] = buffer[i, j]
+
+    return grid
 
 
+# @njit
 def time_dependent_diffusion(time_steps: int, intervals: int, dt: float, D: float):
     if time_steps < 1:
         raise ValueError("Time steps must be greater than 2.")
@@ -31,8 +43,9 @@ def time_dependent_diffusion(time_steps: int, intervals: int, dt: float, D: floa
     grid[0] = 1
     dx = 1 / intervals
 
+    buffer = np.zeros((intervals, intervals), dtype=np.float64)
     for _ in range(1, time_steps):
-        grid = one_step_diffusion(grid, dt, dx, D)
+        grid = one_step_diffusion(grid, buffer, dt, dx, D)
         grid_history.append(grid)
 
     return grid, grid_history
