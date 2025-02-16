@@ -7,3 +7,6 @@ from .utils.time_dependent_diffusion import (
 from .utils.time_dependent_diffusion import (
     time_dependent_diffusion as time_dependent_diffusion,
 )
+from .utils.time_dependent_diffusion import (
+    time_dependent_diffusion_numba as time_dependent_diffusion_numba,
+)
