@@ -112,7 +112,9 @@ def plot_vibrating_string(
 
 @vibrating_string.command(name="animate")
 def animate_vibrating_string(
-    case: Annotated[int, typer.Option(help="String initialisation")] = 1,
+    case: Annotated[
+        Initialisation, typer.Option(help="String initialisation")
+    ] = Initialisation.LowFreq,
     spatial_intervals: Annotated[
         int,
         typer.Option(
