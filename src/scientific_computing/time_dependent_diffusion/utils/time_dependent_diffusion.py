@@ -39,15 +39,15 @@ def time_dependent_diffusion_numba(
     if time_steps < 1:
         raise ValueError("Time steps must be greater than 2.")
 
-    grid_history = []
     grid = np.zeros((intervals, intervals), dtype=np.float64)
     grid[0] = 1
     dx = 1 / intervals
 
     buffer = np.zeros((intervals, intervals), dtype=np.float64)
-    for _ in range(1, time_steps):
+    grid_history = [grid.copy()]
+    for _ in range(time_steps):
         grid = one_step_diffusion_numba(grid, buffer, dt, dx, D)
-        grid_history.append(grid)
+        grid_history.append(grid.copy())
 
     return grid, grid_history
 
@@ -74,14 +74,14 @@ def time_dependent_diffusion(time_steps: int, intervals: int, dt: float, D: floa
     if time_steps < 1:
         raise ValueError("Time steps must be greater than 2.")
 
-    grid_history = []
     grid = np.zeros((intervals, intervals), dtype=np.float64)
     grid[0] = 1
     dx = 1 / intervals
 
-    for _ in range(1, time_steps):
+    grid_history = [grid.copy()]
+    for _ in range(time_steps):
         grid = one_step_diffusion(grid, dt, dx, D)
-        grid_history.append(grid)
+        grid_history.append(grid.copy())
 
     return grid, grid_history
 
