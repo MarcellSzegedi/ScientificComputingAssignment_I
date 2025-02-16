@@ -1,7 +1,8 @@
 import logging
 
 import numpy as np
-import scipy
+
+from scientific_computing.stationary_diffusion.utils.common_functions import check_new_grid
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -24,7 +25,8 @@ def gauss_seidel_iteration(
     Returns:
         2D NumPy array containing the updated values after a GS iteration.
     """
-    _check_trans_matrix(iter_trans_mat)
+    _check_trans_matrix(iter_trans_mat, old_grid)
+    _check_output_vec_trans_mat(output_vec_trans_mat, old_grid)
 
     # Calculate 'b' output vector using grid at time 't' to solve x=inv(A)b
     output_vec = calc_output_vector(old_grid, output_vec_trans_mat)
@@ -33,9 +35,9 @@ def gauss_seidel_iteration(
     # Calculating the next step 't+1' in the iteration
     cell_solutions = np.matmul(iter_trans_mat, output_vec)
 
-    # Reshape the 1D gird cell value vector to a 2D grid
+    # Reshape the 1D grid cell value vector to a 2D grid
     new_grid = restructure_grid(old_grid, cell_solutions)
-    _check_new_grid(new_grid, old_grid)
+    check_new_grid(new_grid, old_grid)
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
     max_cell_diff = np.max(np.abs(old_grid - new_grid))
@@ -55,6 +57,9 @@ def calc_iter_transformation(n: int) -> np.ndarray:
     Returns:
         'A' matrix
     """
+    # Check input
+    _check_grid_side_length(n)
+
     # Initialising the matrix
     var_vector_len = n * n
     matrix = np.eye(var_vector_len, var_vector_len) * 4
@@ -81,7 +86,7 @@ def calc_iter_transformation(n: int) -> np.ndarray:
     matrix += np.diag(diag_3, k=n-1)
 
     # Calculating the inverse matrix
-    inverse_matrix = scipy.sparse.linalg.inv(matrix)
+    inverse_matrix = np.linalg.inv(matrix)
     logging.info("Transformation matrix is calculated successfully for Gauss Seidel iteration.")
     return inverse_matrix
 
@@ -97,9 +102,12 @@ def calc_output_vector_trans_matrix(n: int) -> np.ndarray:
     Returns:
         'B' matrix
     """
+    # Check input
+    _check_grid_side_length(n)
+
     # Initialising the matrix
     var_vector_len = n * n
-    matrix = np.eye(var_vector_len, var_vector_len) * 4
+    matrix = np.zeros((var_vector_len, var_vector_len))
 
     # Create repeating patters for the diagonals
     pattern_1 = np.array([1] * (n - 1) + [0])
@@ -133,6 +141,9 @@ def calc_output_vector(grid: np.ndarray, output_trans_matrix: np.ndarray) -> np.
     # Reshaping the grid to a 1D array to obtain 'z' vector in the b=Bz equation
     cell_vector = grid.ravel(order='C')
 
+    # Checking the compatibility of cell vector and the output transformation matrix
+    _check_old_cell_value(cell_vector, output_trans_matrix)
+
     # Calculating the output vector
     output_vector = np.matmul(output_trans_matrix, cell_vector)
 
@@ -163,10 +174,9 @@ def restructure_grid(old_grid: np.ndarray, cell_solutions: np.ndarray) -> np.nda
     return cell_solutions.reshape(old_grid.shape[0], old_grid.shape[1])
 
 
-def _check_trans_matrix(trans_matrix: np.ndarray) -> None:
+def _check_trans_matrix(trans_matrix: np.ndarray, grid: np.ndarray) -> None:
     """
-    Checks if the transformation matrix is squared. This requirement is applicable due to the specific lattice given in
-    the problem.
+    Checks if the transformation matrix is the same size as the grid.
 
     Args:
         trans_matrix: Matrix used to compute the new grid by multiplying the previous one, applying the Gauss Seidel
@@ -175,14 +185,33 @@ def _check_trans_matrix(trans_matrix: np.ndarray) -> None:
     Returns:
         None
     """
-    if trans_matrix.shape[0] != trans_matrix.shape[1]:
-        raise ValueError(f"Transformation matrix is not square. Its height is {trans_matrix.shape[0]}, while the width "
-                         f"is {trans_matrix.shape[1]}.")
+    if trans_matrix.shape[0] != grid.shape[0] ** 2 and trans_matrix.shape[1] != grid.shape[1] ** 2:
+        raise ValueError(f"Transformation matrix of the gauss - seidel iteration has different shape than the current "
+                         f"grid input. The transformation matrix has the shape of {trans_matrix.shape}, while the "
+                         f"current grid has {grid.shape}.")
+
+
+def _check_output_vec_trans_mat(output_vec_trans_mat: np.ndarray, grid: np.ndarray) -> None:
+    """
+    Checks if the output vector transformation matrix is the same size as the grid and contains only 0 and 1 values.
+
+    Args:
+        output_vec_trans_mat:
+
+    Returns:
+
+    """
+    if output_vec_trans_mat.shape[0] != grid.shape[0] ** 2 and output_vec_trans_mat.shape[1] != grid.shape[1] ** 2:
+        raise ValueError(f"Output vector transformation matrix has different shape than the current grid. The matrix "
+                         f"has a shape of {output_vec_trans_mat.shape}, while the current grid has {grid.shape}.")
+    if np.any(~np.isin(output_vec_trans_mat, [0, 1])):
+        raise ValueError("Output vector transformation matrix contains values other than '0' and '1'.")
 
 
 def _check_output_matrix(trans_matrix: np.ndarray, output_vec: np.ndarray) -> None:
     """
-    Checks if the output vector 'b' has the same length as the width of the inverse of matrix 'A' in the linear
+    Checks
+    if the output vector 'b' has the same length as the width of the inverse of matrix 'A' in the linear
     equation Ax = b, where 'x' is the 1D vector consisting of the new values of the grid at time 't+1'. The match is
     required due to the matrix multiplication operation.
 
@@ -201,17 +230,12 @@ def _check_output_matrix(trans_matrix: np.ndarray, output_vec: np.ndarray) -> No
                          f"{trans_matrix.shape[1]}.")
 
 
-def _check_new_grid(new_grid: np.ndarray, old_grid: np.ndarray) -> None:
-    """
-    Checks if the new computed grid has the same shape as the previous one.
+def _check_grid_side_length(n: int) -> None:
+    if n < 2:
+        raise ValueError("The grid size must be at least 2.")
 
-    Args:
-        new_grid: 2D numpy array consisting of grid values at time 't'
-        old_grid: 2D numpy array consisting of grid values at time 't+1'
 
-    Returns:
-        None
-    """
-    if new_grid.shape != old_grid.shape:
-        raise ValueError(f"The shape of new grid at 't+1' is not equal to the shape of old grid at 't'. The shape of "
-                         f"the new grid is {new_grid.shape}, while the shape of the old one is {old_grid.shape}.")
+def _check_old_cell_value(old_cell_values: np.ndarray, output_trans_mat: np.ndarray) -> None:
+    if old_cell_values.shape[0] != output_trans_mat.shape[1]:
+        raise ValueError(f"The length of the 1D cell value vector ({old_cell_values.shape[0]}) differs from the width "
+                         f"of the output transformation matrix ({output_trans_mat.shape[1]}).")

@@ -1,10 +1,22 @@
 import unittest
+from unittest.mock import patch
+
+import numpy as np
 
 from scientific_computing.stationary_diffusion.iteration_techniques import (
     jacobi_iteration,
 )
 from scientific_computing.stationary_diffusion.utils import (
     initialize_grid,
+)
+from scientific_computing.stationary_diffusion.iteration_techniques.gauss_seidel_iteration import (
+    gauss_seidel_iteration,
+    calc_iter_transformation,
+    calc_output_vector_trans_matrix,
+    calc_output_vector, restructure_grid
+)
+from scientific_computing.stationary_diffusion.iteration_techniques.sor_iteration import (
+    sor_iteration
 )
 
 
@@ -27,3 +39,208 @@ class TestJacobiIteration(unittest.TestCase):
 
     def test_boundary_conditions(self):
         """Testing that boundary conditions remain unchanged."""
+
+
+class TestMatrixComputations(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.n = 3
+        cls.invalid_n_1 = 1
+
+    def test_calc_iter_transformation(self):
+        """Testing if the output equals to the expected matrix."""
+        expected_inverse_mat = np.array([[ 4,  0, -1,  0,  0,  0,  0,  0,  0],
+                                         [-1,  4,  0,  0,  0,  0,  0,  0,  0],
+                                         [ 0, -1,  4,  0,  0,  0,  0,  0,  0],
+                                         [-1,  0,  0,  4,  0, -1,  0,  0,  0],
+                                         [ 0, -1,  0, -1,  4,  0,  0,  0,  0],
+                                         [ 0,  0, -1,  0, -1,  4,  0,  0,  0],
+                                         [ 0,  0,  0, -1,  0,  0,  4,  0, -1],
+                                         [ 0,  0,  0,  0, -1,  0, -1,  4,  0],
+                                         [ 0,  0,  0,  0,  0, -1,  0, -1,  4]])
+        matrix_output = calc_iter_transformation(self.n)
+        inv_matrix_output = np.linalg.inv(matrix_output)
+        np.testing.assert_allclose(expected_inverse_mat, inv_matrix_output, atol=1e-16)
+
+    def test_calc_output_vector_trans_matrix(self):
+        expected_mat = np.array([[0, 1, 0, 1, 0, 0, 0, 0, 0],
+                                 [0, 0, 1, 0, 1, 0, 0, 0, 0],
+                                 [1, 0, 0, 0, 0, 1, 0, 0, 0],
+                                 [0, 0, 0, 0, 1, 0, 1, 0, 0],
+                                 [0, 0, 0, 0, 0, 1, 0, 1, 0],
+                                 [0, 0, 0, 1, 0, 0, 0, 0, 1],
+                                 [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                                 [0, 0, 0, 0, 0, 0, 0, 0, 1],
+                                 [0, 0, 0, 0, 0, 0, 1, 0, 0]])
+        matrix_output = calc_output_vector_trans_matrix(self.n)
+        np.testing.assert_array_equal(matrix_output, expected_mat)
+
+    def test_calc_iter_transformation_invalid_output(self):
+        with self.assertRaises(ValueError):
+            calc_iter_transformation(self.invalid_n_1)
+
+    def test_calc_output_vector_trans_matrix_invalid_output(self):
+        with self.assertRaises(ValueError):
+            calc_output_vector_trans_matrix(self.invalid_n_1)
+
+
+class TestGaussSeidelIteration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.old_grid = np.array([[0.5, 0.4, 0.6],
+                                 [0.2, 0, 0.3],
+                                 [1, 0.5, 0.4]])
+        cls.trans_matrix = np.linalg.inv(np.array([
+            [4, 0, -1, 0, 0, 0, 0, 0, 0],
+            [-1, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, -1, 4, 0, 0, 0, 0, 0, 0],
+            [-1, 0, 0, 4, 0, -1, 0, 0, 0],
+            [0, -1, 0, -1, 4, 0, 0, 0, 0],
+            [0, 0, -1, 0, -1, 4, 0, 0, 0],
+            [0, 0, 0, -1, 0, 0, 4, 0, -1],
+            [0, 0, 0, 0, -1, 0, -1, 4, 0],
+            [0, 0, 0, 0, 0, -1, 0, -1, 4]
+        ]))
+        cls.invalid_trans_matrix = np.array([
+            [4, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+            [-1, 4, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, -1, 4, 0, 0, 0, 0, 0, 0, 0],
+            [-1, 0, 0, 4, 0, -1, 0, 0, 0, 0],
+            [0, -1, 0, -1, 4, 0, 0, 0, 0, 0],
+            [0, 0, -1, 0, -1, 4, 0, 0, 0, 0],
+            [0, 0, 0, -1, 0, 0, 4, 0, -1, 0],
+            [0, 0, 0, 0, -1, 0, -1, 4, 0, 0],
+            [0, 0, 0, 0, 0, -1, 0, -1, 4, 0]
+        ])
+        cls.output_vec_trans_mat = np.array([
+            [0, 1, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 1, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0]
+        ])
+        cls.invalid_output_vec_trans_mat_1 = np.array([
+            [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+        ])
+        cls.invalid_output_vec_trans_mat_2 = np.array([
+            [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 2]
+        ])
+        cls.output_vec = np.array([1.6, 1.6, 1.8, 1.0, 0.8, 0.6, 0.5, 0.4, 1.0])
+        cls.invalid_new_grid = np.array([
+            [0.5, 0.4, 0.6],
+            [0.2, 0, 0.3],
+            [1, 0.5, 0.4],
+            [1, 0.5, 0.4]
+        ])
+        cls.cell_value_input = cls.old_grid.ravel(order='C')
+
+    def test_gauss_seidel_iteration_normal(self):
+        """Testing the normal functioning of the gauss seidel iteration."""
+        expected_output = np.linalg.solve(np.linalg.inv(self.trans_matrix), self.output_vec).reshape(3, 3)
+        expected_max_diff = np.max(np.abs(expected_output - self.old_grid))
+
+        test_result = gauss_seidel_iteration(self.old_grid, self.trans_matrix, self.output_vec_trans_mat)
+        np.testing.assert_allclose(expected_output, test_result[0], atol=1e-16)
+        np.testing.assert_allclose(expected_max_diff, test_result[1], atol=1e-16)
+
+    def test_gauss_seidel_iteration_invalid_trans_matrix(self):
+        with self.assertRaises(ValueError):
+            gauss_seidel_iteration(self.old_grid, self.invalid_trans_matrix, self.output_vec_trans_mat)
+
+    def test_gauss_seidel_iteration_invalid_output_vector(self):
+        with self.assertRaises(ValueError):
+            gauss_seidel_iteration(self.old_grid, self.trans_matrix, self.invalid_output_vec_trans_mat_1)
+            gauss_seidel_iteration(self.old_grid, self.trans_matrix, self.invalid_output_vec_trans_mat_2)
+
+    @patch("scientific_computing.stationary_diffusion.iteration_techniques.gauss_seidel_iteration.restructure_grid")
+    def test_gauss_seidel_iteration_invalid_new_grid(self, mock_restructure_grid):
+        mock_restructure_grid.return_value = self.invalid_new_grid
+        with self.assertRaises(ValueError):
+            gauss_seidel_iteration(self.old_grid, self.trans_matrix, self.output_vec_trans_mat)
+
+    def test_calc_output_vector_normal(self):
+        result = calc_output_vector(self.old_grid, self.output_vec_trans_mat)
+        np.testing.assert_allclose(result, self.output_vec, atol=1e-16)
+
+    def test_calc_output_vector_invalid_cell_value_length(self):
+        with self.assertRaises(ValueError):
+            calc_output_vector(self.invalid_new_grid, self.output_vec_trans_mat)
+
+    def test_restructure_grid_normal(self):
+        expected_output = restructure_grid(self.old_grid, self.cell_value_input)
+        np.testing.assert_allclose(expected_output, self.old_grid, atol=1e-16)
+
+    def test_restructure_grid_invalid_cell_value_length(self):
+        with self.assertRaises(ValueError):
+            restructure_grid(self.invalid_new_grid, self.cell_value_input)
+
+class TestSorIterations(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.old_grid = np.array([[0.5, 0.4, 0.6],
+                                 [0.2, 0, 0.3],
+                                 [1, 0.5, 0.4]])
+        cls.trans_matrix = np.linalg.inv(np.array([
+            [4, 0, -1, 0, 0, 0, 0, 0, 0],
+            [-1, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, -1, 4, 0, 0, 0, 0, 0, 0],
+            [-1, 0, 0, 4, 0, -1, 0, 0, 0],
+            [0, -1, 0, -1, 4, 0, 0, 0, 0],
+            [0, 0, -1, 0, -1, 4, 0, 0, 0],
+            [0, 0, 0, -1, 0, 0, 4, 0, -1],
+            [0, 0, 0, 0, -1, 0, -1, 4, 0],
+            [0, 0, 0, 0, 0, -1, 0, -1, 4]
+        ]))
+        cls.output_vec_trans_mat = np.array([
+            [0, 1, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 1, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0]
+        ])
+        cls.output_vec = np.array([1.6, 1.6, 1.8, 1.0, 0.8, 0.6, 0.5, 0.4, 1.0])
+        cls.omega = 1.8
+        cls.invalid_gs_subresult = np.array([
+            [0.5, 0.4, 0.6],
+            [0.2, 0, 0.3],
+            [1, 0.5, 0.4],
+            [1, 0.5, 0.4]
+        ])
+
+    def test_sor_iteration_normal(self):
+        expected_output = (np.linalg.solve(np.linalg.inv(self.trans_matrix), self.output_vec).reshape(3, 3) * self.omega / 4
+                           + self.old_grid * (1 - self.omega))
+        expected_max_diff = np.max(np.abs(expected_output - self.old_grid))
+        test_result = sor_iteration(self.old_grid, self.trans_matrix, self.output_vec_trans_mat, self.omega)
+        np.testing.assert_allclose(expected_output, test_result[0], atol=1e-16)
+        np.testing.assert_allclose(expected_max_diff, test_result[1], atol=1e-16)
+
+    @patch("scientific_computing.stationary_diffusion.iteration_techniques.sor_iteration.gauss_seidel_iteration")
+    def test_sor_iteration_invalid_gs_sub_result(self, mock_gauss_seidel_iteration):
+        mock_gauss_seidel_iteration.return_value = (self.invalid_gs_subresult, 1)
+        with self.assertRaises(ValueError):
+            sor_iteration(self.old_grid, self.trans_matrix, self.output_vec_trans_mat, self.omega)

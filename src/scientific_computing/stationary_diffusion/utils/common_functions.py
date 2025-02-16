@@ -45,3 +45,19 @@ def _checks_grid_shape(grid: np.ndarray) -> None:
         raise ValueError(
             f"Grid must be a square, while the current grid shape is {grid.shape}."
         )
+
+
+def check_new_grid(new_grid: np.ndarray, old_grid: np.ndarray) -> None:
+    """
+    Checks if the new computed grid has the same shape as the previous one.
+
+    Args:
+        new_grid: 2D numpy array consisting of grid values at time 't'
+        old_grid: 2D numpy array consisting of grid values at time 't+1'
+
+    Returns:
+        None
+    """
+    if new_grid.shape != old_grid.shape:
+        raise ValueError(f"The shape of new grid at 't+1' is not equal to the shape of old grid at 't'. The shape of "
+                         f"the new grid is {new_grid.shape}, while the shape of the old one is {old_grid.shape}.")
