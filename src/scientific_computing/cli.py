@@ -184,6 +184,88 @@ def animate_vibrating_string(
 
 
 @td_diffusion.command()
+def jacobi(
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+):
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    cylinder.solve_jacobi(epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
+def gauss_seidel(
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+):
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    cylinder.solve_gauss_seidel(epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
+def sor(
+    omega: Annotated[
+        float,
+        typer.Option(
+            "--omega",
+            "-w",
+        ),
+    ],
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+):
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    cylinder.solve_sor(omega=omega, epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
 def plot_timesteps(
     measurement_times: Annotated[
         list[float],

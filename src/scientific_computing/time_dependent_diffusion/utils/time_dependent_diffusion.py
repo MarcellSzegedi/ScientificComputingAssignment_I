@@ -79,6 +79,153 @@ class Cylinder:
 
         return measurements
 
+    def solve_jacobi(
+        self,
+        epsilon: float = 1e-2,
+        max_iters: int = 100000,
+        mode: RunMode = RunMode.Numba,
+    ):
+        match mode:
+            case RunMode.Numba:
+                update = jacobi_update_numba
+            case _:
+                raise NotImplementedError(f"Unsupported run mode for Jacobi: {mode}")
+
+        old_grid = self.grid
+        buffer = np.empty_like(old_grid)
+        new_grid, diff = update(old_grid, buffer)
+        iters = 1
+        while diff > epsilon and iters < max_iters:
+            new_grid, diff = update(new_grid, buffer)
+            iters += 1
+        if iters < max_iters:
+            print(f"Converged after {iters} iterations.")
+        else:
+            print(f"Terminated early after {iters} iterations.")
+        self.grid = new_grid
+
+    def solve_gauss_seidel(
+        self,
+        epsilon: float = 1e-2,
+        max_iters: int = 100000,
+        mode: RunMode = RunMode.Numba,
+    ):
+        match mode:
+            case RunMode.Numba:
+                update = gauss_seidel_update_numba
+            case _:
+                raise NotImplementedError(f"Unsupported run mode for Jacobi: {mode}")
+
+        old_grid = self.grid
+        new_grid, diff = update(old_grid)
+        iters = 1
+        while diff > epsilon and iters < max_iters:
+            new_grid, diff = update(new_grid)
+            iters += 1
+        if iters < max_iters:
+            print(f"Converged after {iters} iterations.")
+        else:
+            print(f"Terminated early after {iters} iterations.")
+        self.grid = new_grid
+
+    def solve_sor(
+        self,
+        omega: float = 1.0,
+        epsilon: float = 1e-2,
+        max_iters: int = 100000,
+        mode: RunMode = RunMode.Numba,
+    ):
+        match mode:
+            case RunMode.Numba:
+                update = sor_update_numba
+            case _:
+                raise NotImplementedError(f"Unsupported run mode for Jacobi: {mode}")
+
+        old_grid = self.grid
+        new_grid, diff = update(old_grid, omega)
+        iters = 1
+        while diff > epsilon and iters < max_iters:
+            new_grid, diff = update(new_grid, omega)
+            iters += 1
+        if iters < max_iters:
+            print(f"Converged after {iters} iterations.")
+        else:
+            print(f"Terminated early after {iters} iterations.")
+        self.grid = new_grid
+
+
+@njit
+def jacobi_update_numba(
+    grid: npt.NDArray[np.float64],
+    buffer: npt.NDArray[np.float64],
+):
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            buffer[i, j] = 0.25 * (
+                grid[i - 1, j]  # North
+                + grid[i + 1, j]  # South
+                + grid[i, (j + 1) % grid.shape[1]]  # East
+                + grid[i, (j - 1) % grid.shape[1]]  # West
+            )
+
+    max_diff = 0.0
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            diff = abs(buffer[i, j] - grid[i, j])
+            if diff > max_diff:
+                max_diff = diff
+            grid[i, j] = buffer[i, j]
+
+    return grid, max_diff
+
+
+@njit
+def gauss_seidel_update_numba(
+    grid: npt.NDArray[np.float64],
+):
+    max_diff = 0.0
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            new_val = 0.25 * (
+                grid[i - 1, j]  # North
+                + grid[i + 1, j]  # South
+                + grid[i, (j + 1) % grid.shape[1]]  # East
+                + grid[i, (j - 1) % grid.shape[1]]  # West
+            )
+            diff = abs(new_val - grid[i, j])
+            if diff > max_diff:
+                max_diff = diff
+            grid[i, j] = new_val
+
+    return grid, max_diff
+
+
+@njit
+def sor_update_numba(
+    grid: npt.NDArray[np.float64],
+    omega: float,
+):
+    max_diff = 0.0
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            new_val = (
+                omega
+                * 0.25
+                * (
+                    grid[i - 1, j]  # North
+                    + grid[i + 1, j]  # South
+                    + grid[i, (j + 1) % grid.shape[1]]  # East
+                    + grid[i, (j - 1) % grid.shape[1]]  # West
+                )
+                + (1 - omega) * grid[i, j]
+            )
+            diff = abs(new_val - grid[i, j])
+            if diff > max_diff:
+                max_diff = diff
+            grid[i, j] = new_val
+
+    return grid, max_diff
+
 
 @njit
 def one_step_diffusion_numba(
