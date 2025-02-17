@@ -41,6 +41,7 @@ def test_is_stable_scheme(intervals, dt, D):
     D=floats(min_value=0, allow_nan=False, allow_infinity=False),
 )
 def test_numba_version_gives_same_results(time_steps, intervals, dt, D):
+    assume(is_stable_scheme(dt, 1 / intervals, D))
     grid_python, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
     grid_numba, _ = time_dependent_diffusion_numba(time_steps, intervals, dt, D)
 
@@ -55,6 +56,7 @@ def test_numba_version_gives_same_results(time_steps, intervals, dt, D):
     D=floats(min_value=0, allow_nan=False, allow_infinity=False),
 )
 def test_rust_version_gives_same_results(time_steps, intervals, dt, D):
+    assume(is_stable_scheme(dt, 1 / intervals, D))
     grid_python, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
     grid_rust = td_diffusion_cylinder([time_steps], intervals, dt, D)[0]
 
