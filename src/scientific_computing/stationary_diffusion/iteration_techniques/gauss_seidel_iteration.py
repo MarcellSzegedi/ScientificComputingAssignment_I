@@ -40,7 +40,7 @@ def gauss_seidel_iteration(
     check_new_grid(new_grid, old_grid)
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
-    max_cell_diff = np.max(np.abs(old_grid - new_grid))
+    max_cell_diff = float(np.max(np.abs(old_grid - new_grid)))
 
     return new_grid, max_cell_diff
 

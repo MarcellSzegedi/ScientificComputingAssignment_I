@@ -28,6 +28,54 @@ def reset_grid_wrapping(grid: np.ndarray) -> np.ndarray:
     return grid
 
 
+def add_grid_wrapping(grid: np.ndarray) -> np.ndarray:
+    """
+    Adds a wrapping around the existing grid based on the following rules:
+    - Wrap the top with ones
+    - Wrap the bottom with zeros
+    _ Wrap the left and right with each other
+
+    Args:
+        grid: Existing grid (2D numpy array)
+
+    Returns:
+        Wrapped grid (2D numpy array)
+    """
+    _checks_grid_shape(grid)
+
+    # Create a shell for the existing grid
+    wrapped_grid = np.zeros((grid.shape[0] + 2, grid.shape[1] + 2))
+
+    # Add the existing grid to the center of the shell leaving a layer of 0s around it
+    wrapped_grid[1:-1, 1:-1] = grid
+
+    # Change the top row
+    wrapped_grid[0, :] = 1
+
+    # Change the right and left columns
+    wrapped_grid[:, 0] = wrapped_grid[:, -2]
+    wrapped_grid[:, -1] = wrapped_grid[:, 1]
+
+    return wrapped_grid
+
+
+def check_new_grid(new_grid: np.ndarray, old_grid: np.ndarray) -> None:
+    """
+    Checks if the new computed grid has the same shape as the previous one.
+
+    Args:
+        new_grid: 2D numpy array consisting of grid values at time 't'
+        old_grid: 2D numpy array consisting of grid values at time 't+1'
+
+    Returns:
+        None
+    """
+    if new_grid.shape != old_grid.shape:
+        raise ValueError(f"The shape of new grid at 't+1' is not equal to the shape of old grid at 't'. The shape of "
+                         f"the new grid is {new_grid.shape}, while the shape of the old one is {old_grid.shape}.")
+
+
+
 def _checks_grid_shape(grid: np.ndarray) -> None:
     """
     Checks if the grid is a 2D square
@@ -45,19 +93,3 @@ def _checks_grid_shape(grid: np.ndarray) -> None:
         raise ValueError(
             f"Grid must be a square, while the current grid shape is {grid.shape}."
         )
-
-
-def check_new_grid(new_grid: np.ndarray, old_grid: np.ndarray) -> None:
-    """
-    Checks if the new computed grid has the same shape as the previous one.
-
-    Args:
-        new_grid: 2D numpy array consisting of grid values at time 't'
-        old_grid: 2D numpy array consisting of grid values at time 't+1'
-
-    Returns:
-        None
-    """
-    if new_grid.shape != old_grid.shape:
-        raise ValueError(f"The shape of new grid at 't+1' is not equal to the shape of old grid at 't'. The shape of "
-                         f"the new grid is {new_grid.shape}, while the shape of the old one is {old_grid.shape}.")

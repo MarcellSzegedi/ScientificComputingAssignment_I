@@ -2,14 +2,17 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
+from numpy.conftest import dtype
 
 from scientific_computing.stationary_diffusion.utils.common_functions import (
     reset_grid_wrapping,
+    add_grid_wrapping
 )
-from scientific_computing.stationary_diffusion.utils.constants import LATTICE_LENGTH
 from scientific_computing.stationary_diffusion.utils.grid_initialisation import (
     initialize_grid,
 )
+
+LATTICE_LENGTH = 1
 
 
 class TestGridInitialisation(unittest.TestCase):
@@ -32,7 +35,7 @@ class TestGridInitialisation(unittest.TestCase):
             ],
             dtype=float,
         )
-        grid_result = initialize_grid(delta=self.delta_1)
+        grid_result, _ = initialize_grid(delta=self.delta_1)
         npt.assert_array_equal(grid_result, expected_grid)
 
     def test_initialize_grid_fraction_grid_size(self):
@@ -49,13 +52,13 @@ class TestGridInitialisation(unittest.TestCase):
             ],
             dtype=float,
         )
-        grid_result = initialize_grid(delta=self.delta_2)
+        grid_result, _ = initialize_grid(delta=self.delta_2)
         npt.assert_array_equal(grid_result, expected_grid)
 
     def test_initialize_grid_big_delta(self):
         """Testing whether the function raises error if the delta input is too large."""
         with self.assertRaises(ValueError):
-            _ = initialize_grid(delta=self.delta_3)
+            initialize_grid(delta=self.delta_3)
 
 
 class TestCommonFunctions(unittest.TestCase):
@@ -70,6 +73,11 @@ class TestCommonFunctions(unittest.TestCase):
                 [0.2, 0.1, 0.005, 0.1, 0.15],
             ]
         )
+        cls.existing_grid_focused = np.array([
+            [1, 2, 3],
+            [3, 4, 5],
+            [9, 8, 7]
+        ])
         cls.rectangular_grid = np.array(
             [
                 [1, 0.8, 0.6, 1, 0.7],
@@ -99,8 +107,7 @@ class TestCommonFunctions(unittest.TestCase):
         npt.assert_array_equal(grid_result, expected_grid)
 
     def test_reset_grid_wrapping_incorrect_shapes_1(self):
-        """Testing whether the function raises error due to the rectangular grid
-        shape."""
+        """Testing whether the function raises error due to the rectangular grid shape."""
         with self.assertRaises(ValueError):
             _ = reset_grid_wrapping(self.rectangular_grid)
 
@@ -108,3 +115,23 @@ class TestCommonFunctions(unittest.TestCase):
         """Testing whether the function raises error due to the 1D grid."""
         with self.assertRaises(ValueError):
             _ = reset_grid_wrapping(self.one_d_grid)
+
+    def test_add_grid_wrapping(self):
+        """Testing the new wrapping (outer layer of the 2D numpy array)"""
+        expected_grid = np.array([[1, 1, 1, 1, 1],
+                                  [3, 1, 2, 3, 1],
+                                  [5, 3, 4, 5, 3],
+                                  [7, 9, 8, 7, 9],
+                                  [0, 0, 0, 0, 0]], dtype=float)
+        test_result = add_grid_wrapping(self.existing_grid_focused)
+        npt.assert_array_equal(test_result, expected_grid)
+
+    def test_add_grid_wrapping_incorrect_shapes_1(self):
+        """Testing whether the function raises error due to the rectangular grid shape."""
+        with self.assertRaises(ValueError):
+            add_grid_wrapping(self.rectangular_grid)
+
+    def test_add_grid_wrapping_incorrect_shapes_2(self):
+        """Testing whether the function raises error due to the 1D grid."""
+        with self.assertRaises(ValueError):
+            add_grid_wrapping(self.one_d_grid)

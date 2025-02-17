@@ -3,7 +3,7 @@ import numpy as np
 from .constants import LATTICE_LENGTH
 
 
-def initialize_grid(delta: float) -> np.ndarray:
+def initialize_grid(delta: float) -> (np.ndarray, int):
     """
     Creates a grid (2D numpy array) where every value if going to represent a delta
     time step in the corresponding measure (in this case distance along x and y
@@ -25,7 +25,7 @@ def initialize_grid(delta: float) -> np.ndarray:
     # Initialise grid
     grid = create_grid(grid_size)
 
-    return grid
+    return grid, grid_size
 
 
 def create_grid(grid_size: int) -> np.ndarray:
