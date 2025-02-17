@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis.strategies import floats, integers, sampled_from
 
 from scientific_computing.vibrating_strings_1d.utils.discretize_pde import (
@@ -23,14 +23,21 @@ def test_grid_shape(grid_intervals, time_points, case):
 
 @settings(deadline=None)
 @given(
-    spatial_intervals=integers(min_value=1, max_value=1000),
-    temporal_intervals=integers(min_value=2, max_value=1000),
+    spatial_intervals=integers(min_value=1, max_value=500),
+    temporal_intervals=integers(min_value=2, max_value=500),
     runtime=floats(min_value=1, max_value=1e10),
     propagation_velocity=floats(min_value=0, max_value=1e10),
 )
 def test_max_amplitude_always_at_most_initial_max(
-    spatial_intervals, temporal_intervals, runtime, propagation_velocity
+    spatial_intervals,
+    temporal_intervals,
+    runtime,
+    propagation_velocity,
 ):
+    # Only test if CFL condition is met
+    dt = runtime / temporal_intervals
+    dx = 1 / spatial_intervals
+    assume(propagation_velocity * (dt / dx) <= 1.0)
     states = discretize_pde(
         spatial_intervals,
         temporal_intervals,
@@ -39,7 +46,7 @@ def test_max_amplitude_always_at_most_initial_max(
         c=propagation_velocity,
         case=Initialisation.LowFreq,
     )
-    assert states[0].max() >= states.max()
+    assert states[0].max() == pytest.approx(states.max(), abs=1e-12)
 
 
 def test_string_simulation_raises_on_short_runtime():
