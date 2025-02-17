@@ -1,7 +1,55 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from numba import njit
 from scipy.special import erfc
+
+
+@njit
+def one_step_diffusion_numba(
+    grid: npt.NDArray[np.float64],
+    buffer: npt.NDArray[np.float64],
+    dt: float,
+    dx: float,
+    D: float,
+):
+    diffusion_coeff = (dt * D) / (dx**2)
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            neighbor_concentration_diff = (
+                grid[i + 1, j]  # Lower neighbor
+                + grid[i - 1, j]  # Upper neighbor
+                + grid[i, (j + 1) % grid.shape[1]]  # Right neighbor
+                + grid[i, (j - 1) % grid.shape[1]]  # Left neighbor
+                - 4 * grid[i, j]  # Self
+            )
+
+            buffer[i, j] = grid[i, j] + diffusion_coeff * neighbor_concentration_diff
+
+    for i in range(1, grid.shape[0] - 1):
+        for j in range(0, grid.shape[1]):
+            grid[i, j] = buffer[i, j]
+
+    return grid
+
+
+def time_dependent_diffusion_numba(
+    time_steps: int, intervals: int, dt: float, D: float
+):
+    if time_steps < 1:
+        raise ValueError("Time steps must be greater than 2.")
+
+    grid = np.zeros((intervals, intervals), dtype=np.float64)
+    grid[0] = 1
+    dx = 1 / intervals
+
+    buffer = np.zeros((intervals, intervals), dtype=np.float64)
+    grid_history = [grid.copy()]
+    for _ in range(time_steps):
+        grid = one_step_diffusion_numba(grid, buffer, dt, dx, D)
+        grid_history.append(grid.copy())
+
+    return grid, grid_history
 
 
 def one_step_diffusion(grid: npt.NDArray[np.float64], dt: float, dx: float, D: float):
@@ -18,7 +66,7 @@ def one_step_diffusion(grid: npt.NDArray[np.float64], dt: float, dx: float, D: f
             )
 
             new_grid[i, j] = grid[i, j] + diffusion_coeff * neighbor_concentration_diff
-            grid[i, j] = new_grid[i, j]
+            # grid[i, j] = new_grid[i, j]
     return new_grid
 
 
@@ -26,14 +74,14 @@ def time_dependent_diffusion(time_steps: int, intervals: int, dt: float, D: floa
     if time_steps < 1:
         raise ValueError("Time steps must be greater than 2.")
 
-    grid_history = []
     grid = np.zeros((intervals, intervals), dtype=np.float64)
     grid[0] = 1
     dx = 1 / intervals
 
-    for _ in range(1, time_steps):
+    grid_history = [grid.copy()]
+    for _ in range(time_steps):
         grid = one_step_diffusion(grid, dt, dx, D)
-        grid_history.append(grid)
+        grid_history.append(grid.copy())
 
     return grid, grid_history
 

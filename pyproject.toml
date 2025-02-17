@@ -16,6 +16,7 @@ dependencies = [
     "matplotlib>=3.10.0",
     "numba>=0.61.0",
     "numpy>=2.1.3",
+    "py-spy>=0.4.0",
     "pytest>=8.3.4",
     "scipy>=1.15.1",
     "typer>=0.15.1",
@@ -24,9 +25,15 @@ dependencies = [
 [project.scripts]
 scicomp = "scientific_computing.cli:app"
 
+[tool.maturin]
+module-name = "scientific_computing._core"
+python-packages = ["scientific_computing"]
+python-source = "src"
+
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
 
 [tool.pyright]
 # Makes sure that Henry's editor (neovim) can see the uv virtual environment

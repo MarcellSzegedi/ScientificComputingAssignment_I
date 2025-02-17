@@ -18,9 +18,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.5.31"
+          version: "0.6.0"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
+
+      - name: Build rust bindings
+        run: |
+          uv sync
+          uvx maturin develop --uv --release
 
       - name: Run tests
         run: uv run pytest

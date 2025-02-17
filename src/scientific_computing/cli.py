@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
+from scientific_computing._core import td_diffusion_cylinder
 from scientific_computing.time_dependent_diffusion import (
-    one_step_diffusion,
     plot_solution_comparison,
 )
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
@@ -196,12 +196,12 @@ def plot_timesteps(
     ] = 1,
     dt: Annotated[
         float,
-        typer.Option(help="Step size in temporal dimension.", min=1e-6),
+        typer.Option(help="Step size in temporal dimension.", min=1e-8),
     ] = 0.001,
     dx: Annotated[
         float,
         typer.Option(
-            help="Step size in spatial dimension. Must divide surface width.", min=1e-6
+            help="Step size in spatial dimension. Must divide surface width.", min=1e-8
         ),
     ] = 0.01,
     save_path: Annotated[
@@ -229,22 +229,15 @@ def plot_timesteps(
     # Initialise grid
     # TODO: What if dx doesn't divide width? How do we tell with floating point
     #   arithmetic?
-    spatial_intervals = int(width / dx)
-    grid = np.zeros((spatial_intervals, spatial_intervals), dtype=np.float64)
-    grid[0] = 1
 
     ncol = 2
     nrow = len(measurements) // ncol + len(measurements) % ncol
     fig, axes = plt.subplots(nrow, ncol, layout="constrained", sharex=True, sharey=True)
-    flat_axes = axes.flatten()
-    next_measure_idx = 0
-    for frame in range(max(measurements) + 1):
-        if frame == measurements[next_measure_idx]:
-            flat_axes[next_measure_idx].imshow(
-                grid, extent=[0, width, 0, width], vmin=0, vmax=1
-            )
-            next_measure_idx += 1
-        grid = one_step_diffusion(grid, dt, dx, diffusivity)
+
+    spatial_intervals = int(width / dx)
+    grids = td_diffusion_cylinder(measurements, spatial_intervals, dt, diffusivity)
+    for grid, ax in zip(grids, axes.flatten(), strict=True):
+        ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
 
     if save_path:
         fig.savefig(save_path, dpi=DPI)
