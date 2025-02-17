@@ -24,6 +24,12 @@ def discretize_pde(
 
     dt = runtime / temporal_intervals
     dx = string_length / spatial_intervals
+    if (courant := c * (dt / dx)) > 1.0:
+        raise ValueError(
+            f"Courant number exceeds 1.0, results may be inaccurate: "
+            f"c*(dt/dx) = {courant}."
+        )
+
     r = (c * dt / dx) ** 2
 
     grid = initialize_grid(spatial_intervals, temporal_intervals, case)

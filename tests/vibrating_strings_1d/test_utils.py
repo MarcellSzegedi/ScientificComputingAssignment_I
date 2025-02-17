@@ -62,6 +62,18 @@ def test_string_simulation_raises_on_large_runtime():
         discretize_pde(1, 100, 1, runtime=1e100, c=1, case=Initialisation.LowFreq)
 
 
+def test_string_simulation_raises_on_courant_gt_1():
+    with pytest.raises(ValueError):
+        discretize_pde(
+            spatial_intervals=3,
+            temporal_intervals=2,
+            runtime=1,
+            string_length=1,
+            c=1,
+            case=Initialisation.LowFreq,
+        )
+
+
 def test_initialize_grid_below_two_time_steps_fails():
     with pytest.raises(ValueError):
         initialize_grid(spatial_intervals=50, time_steps=1, case=Initialisation.LowFreq)
