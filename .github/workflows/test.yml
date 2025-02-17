@@ -23,7 +23,9 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Build rust bindings
-        run: uvx maturin develop --uv --release
+        run: |
+          uv sync
+          uvx maturin develop --uv --release
 
       - name: Run tests
         run: uv run pytest
