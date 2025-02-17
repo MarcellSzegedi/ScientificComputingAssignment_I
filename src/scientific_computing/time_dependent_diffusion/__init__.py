@@ -2,17 +2,14 @@ from .utils.animation import (
     animate_diffusion as animate_diffusion,
 )
 from .utils.time_dependent_diffusion import (
-    one_step_diffusion as one_step_diffusion,
+    Cylinder as Cylinder,
 )
 from .utils.time_dependent_diffusion import (
-    one_step_diffusion_numba as one_step_diffusion_numba,
+    RunMode as RunMode,
+)
+from .utils.time_dependent_diffusion import (
+    is_stable_scheme as is_stable_scheme,
 )
 from .utils.time_dependent_diffusion import (
     plot_solution_comparison as plot_solution_comparison,
-)
-from .utils.time_dependent_diffusion import (
-    time_dependent_diffusion as time_dependent_diffusion,
-)
-from .utils.time_dependent_diffusion import (
-    time_dependent_diffusion_numba as time_dependent_diffusion_numba,
 )

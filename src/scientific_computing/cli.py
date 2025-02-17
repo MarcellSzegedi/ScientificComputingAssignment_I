@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
-from scientific_computing._core import td_diffusion_cylinder
 from scientific_computing.animation import (
     animate_diffusion,
 )
 from scientific_computing.time_dependent_diffusion import (
+    Cylinder,
+    RunMode,
     plot_solution_comparison,
     time_dependent_diffusion_numba,
 )
@@ -188,9 +189,13 @@ def animate_vibrating_string(
 
 @td_diffusion.command()
 def plot_timesteps(
-    measurements: Annotated[
-        list[int],
-        typer.Option("--measurement", "-m", help="Timepoints to plot system state."),
+    measurement_times: Annotated[
+        list[float],
+        typer.Option(
+            "--measurement",
+            "-m",
+            help="Timepoints to plot system state, in range [0,1].",
+        ),
     ],
     diffusivity: Annotated[
         float, typer.Option("--diffusivity", "-d", help="Diffusivity coefficient")
@@ -216,6 +221,10 @@ def plot_timesteps(
             help="Filepath to save plot to (including extension)",
         ),
     ] = None,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
 ):
     # Check stability condition
     if (stability_cond := (4 * dt * diffusivity) / (dx**2)) > 1:
@@ -226,8 +235,8 @@ def plot_timesteps(
         )
 
     # Get sorted list of unique measurement times
-    measurements = sorted(list(set(measurements)))
-    if not measurements:
+    measurement_times = sorted(list(set(measurement_times)))
+    if not measurement_times:
         raise ValueError("Measurements list should be non-empty.")
 
     # Initialise grid
@@ -235,11 +244,12 @@ def plot_timesteps(
     #   arithmetic?
 
     ncol = 2
-    nrow = len(measurements) // ncol + len(measurements) % ncol
+    nrow = len(measurement_times) // ncol + len(measurement_times) % ncol
     fig, axes = plt.subplots(nrow, ncol, layout="constrained", sharex=True, sharey=True)
 
     spatial_intervals = int(width / dx)
-    grids = td_diffusion_cylinder(measurements, spatial_intervals, dt, diffusivity)
+    cylinder = Cylinder(spatial_intervals=spatial_intervals, diffusivity=diffusivity)
+    grids = cylinder.measure(measurement_times=measurement_times, dt=dt, mode=mode)
     for grid, ax in zip(grids, axes.flatten(), strict=True):
         ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
 
@@ -251,17 +261,37 @@ def plot_timesteps(
 
 @td_diffusion.command(name="compare")
 def compare_simulation_to_analytical(
-    dt: Annotated[float, typer.Option(help="Time step size")] = 0.001,
-    time_steps: Annotated[
-        int, typer.Option(help="Number of time steps in the simulation")
-    ] = 1000,
-    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 10,
+    measurement_times: Annotated[
+        list[float] | None,
+        typer.Option(
+            "--measurement",
+            "-m",
+            help=(
+                "Timepoints to plot system state, in range [0,1]. "
+                "Default: [0.001, 0.01, 0.1, 1.0]"
+            ),
+        ),
+    ] = None,
+    dt: Annotated[
+        float,
+        typer.Option(help="Time step size"),
+    ] = 0.001,
+    intervals: Annotated[
+        int,
+        typer.Option(help="Number of spatial intervals"),
+    ] = 10,
     terms: Annotated[
-        int, typer.Option(help="Number of terms to use in analytical solution")
+        int,
+        typer.Option(help="Number of terms to use in analytical solution"),
     ] = 100,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
 ):
     """Plot simulation vs analytical solution for time dependent diffusion."""
-    plot_solution_comparison(dt, time_steps, intervals, terms)
+    measurement_times = measurement_times or [0.001, 0.01, 0.1, 1.0]
+    plot_solution_comparison(dt, measurement_times, intervals, terms, mode)
 
 
 @td_diffusion.command(name="animate")
