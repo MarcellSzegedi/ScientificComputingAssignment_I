@@ -82,3 +82,8 @@ def plot_solution_comparison(dt: float, time_steps: int, intervals: int, terms: 
         ax.set_ylabel("Concentration (c)")
         ax.legend()
     plt.show()
+
+
+def is_stable_scheme(dt: float, dx: float, diffusivity: float) -> bool:
+    """Test if discretized diffusion scheme is stable."""
+    return 4 * dt * diffusivity / dx**2 <= 1
