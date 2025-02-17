@@ -22,11 +22,14 @@ def initialize_string(
     x = np.linspace(0, string_length, spatial_intervals + 1)
     match case:
         case Initialisation.LowFreq:
-            return np.sin(2 * np.pi * x)
+            y = np.sin(2 * np.pi * x)
         case Initialisation.HighFreq:
-            return np.sin(5 * np.pi * x)
+            y = np.sin(5 * np.pi * x)
         case Initialisation.BoundedHighFreq:
-            return np.where((x > 1 / 5) & (x < 2 / 5), np.sin(5 * np.pi * x), 0)
+            y = np.where((x > 1 / 5) & (x < 2 / 5), np.sin(5 * np.pi * x), 0)
+
+    y[[0, spatial_intervals]] = 0.0
+    return y
 
 
 def initialize_grid(spatial_intervals: int, time_steps: int, case: Initialisation):
@@ -39,5 +42,4 @@ def initialize_grid(spatial_intervals: int, time_steps: int, case: Initialisatio
 
     grid = np.zeros((time_steps, spatial_intervals + 1))
     grid[0] = initialize_string(spatial_intervals, case)
-    grid[1] = grid[0]
     return grid
