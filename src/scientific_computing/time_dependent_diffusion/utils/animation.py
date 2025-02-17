@@ -2,10 +2,6 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scientific_computing.time_dependent_diffusion import (
-    time_dependent_diffusion,
-)
-
 
 def plot_3d_cylinder(grid, ax):
     """Maps the 2D grid onto a 3D cylinder and plots it."""
@@ -39,13 +35,3 @@ def animate_diffusion(grid_history, dpi=300, fps=50):
     save_path = "diffusion_cylinder.mp4"
     ani.save(save_path, writer="ffmpeg", fps=fps)
     print(f"Animation saved as {save_path}")
-
-
-diffusivity = 1
-dt = 0.001
-time_steps = 1000
-intervals = 15
-
-_, grid_history = time_dependent_diffusion(time_steps, intervals, dt, diffusivity)
-
-animate_diffusion(grid_history)
