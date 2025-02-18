@@ -315,7 +315,7 @@ def one_step_diffusion_numba(
     dt: float,
     dx: float,
     D: float,
-    rectangle_sinks: list[tuple[int, int, int, int]],
+    rectangle_sinks,
 ):
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):

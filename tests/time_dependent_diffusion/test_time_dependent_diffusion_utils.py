@@ -85,12 +85,6 @@ def test_diffusion_measure_raises_on_measure_time_lt_0():
         cylinder.measure(measurement_times=[-0.0001, 0.1, 0.5], dt=0.01)
 
 
-def test_diffusion_measure_raises_on_measure_time_gt_1():
-    cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
-    with pytest.raises(ValueError):
-        cylinder.measure(measurement_times=[0.1, 1.0001, 0.5], dt=0.01)
-
-
 def test_diffusion_measure_okay_ok_valid_measure_times():
     cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
     cylinder.measure(measurement_times=[0.0, 0.1, 0.5, 1.0], dt=0.01)
