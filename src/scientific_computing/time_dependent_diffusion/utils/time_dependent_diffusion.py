@@ -104,7 +104,6 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
-                    rect_ins=self.rectangle_ins,
                 )[-1]
                 return
 
@@ -141,7 +140,6 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
-                    rect_ins=self.rectangle_ins[1:],
                 )
                 self.grid = measurements[-1].copy()
                 return measurements
@@ -160,6 +158,7 @@ class Cylinder:
                 self.dx,
                 self.diffusivity,
                 self.rectangle_sinks,
+                self.rectangle_ins,
             )
 
         return measurements
@@ -188,7 +187,6 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
-                    rect_ins=self.rectangle_ins[1:],
                 )
                 self.grid = measurements[-1].copy()
                 return measurements
