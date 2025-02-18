@@ -28,17 +28,20 @@ class Cylinder:
         spatial_intervals: int,
         diffusivity: float,
         sinks: DomainObjects | None = None,
+        insulators: DomainObjects | None = None,
     ):
         self.grid = np.zeros((spatial_intervals, spatial_intervals), dtype=np.float64)
         self.grid[0] = 1.0
         self.dx = 1 / spatial_intervals
         self.diffusivity = diffusivity
-        self.init_objects(sinks=sinks, dx=self.dx)
+        self.init_objects(sinks=sinks, insulators=insulators, dx=self.dx)
 
     def discretise_coord(self, coord: float) -> int:
         return int(coord / self.dx)
 
-    def init_objects(self, sinks: DomainObjects | None, dx: float):
+    def init_objects(
+        self, sinks: DomainObjects | None, insulators: DomainObjects | None, dx: float
+    ):
         def discretise_rect(rect: Rectangle) -> tuple[int, int, int, int]:
             return (
                 self.discretise_coord(rect[0]),
@@ -67,6 +70,26 @@ class Cylinder:
                         # circle_sinks.append(obj)
             self.rectangle_sinks = rectangle_sinks
             self.circle_sinks = circle_sinks
+
+        if insulators is None:
+            self.rectangle_insulators = [(0, 0, 0, 0)]
+            self.circle_insulators = []
+        else:
+            rectangle_insulators = [(0, 0, 0, 0)]
+            circle_insulators = []
+            for obj in insulators:
+                match obj:
+                    case (_, _, _, _):
+                        if not all(0 <= v <= 1 for v in obj):
+                            raise ValueError(
+                                f"Rectangle must fit inside cylinder with dimensions "
+                                f"1x1. Found rectangle of shape: {obj}."
+                            )
+                        rectangle_insulators.append(discretise_rect(obj))
+                    case (_, _, _):
+                        raise NotImplementedError
+            self.rectangle_insulators = rectangle_insulators
+            self.circle_insulators = circle_insulators
 
     def run(self, n_iters: int, dt: float, mode: RunMode = RunMode.Python):
         if n_iters < 0:
@@ -140,8 +163,8 @@ class Cylinder:
     ):
         if run_time < 0.0:  # or max(measurement_times) > 1.0:
             raise ValueError("Measurement times must be greater than zero.")
-        elif run_time > 1000:
-            raise ValueError("Measurement times must be less than 1000.")
+        elif run_time / measure_every > 1000:
+            raise ValueError("Measurements must be less than 1000.")
 
         match mode:
             case RunMode.Python:
@@ -166,7 +189,13 @@ class Cylinder:
             if t % measure_every == 0:
                 measurements.append(self.grid.copy())
             self.grid = update(
-                self.grid, buffer, dt, self.dx, self.diffusivity, self.rectangle_sinks
+                self.grid,
+                buffer,
+                dt,
+                self.dx,
+                self.diffusivity,
+                self.rectangle_sinks,
+                self.rectangle_insulators,
             )
 
         return measurements
@@ -356,6 +385,7 @@ def one_step_diffusion_numba(
     dx: float,
     D: float,
     rectangle_sinks,
+    rectangle_ins,
 ):
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):
@@ -374,6 +404,15 @@ def one_step_diffusion_numba(
         for i in range(y, y + h):
             for j in range(x, x + w):
                 buffer[i, j % grid.shape[1]] = 0.0
+
+    for x, y, w, h in rectangle_ins[1:]:
+        for i in range(y, y + h):
+            for j in range(x, x + w):
+                buffer[i, j % grid.shape[1]] = 0.0
+        buffer[y - 1, x : x + w] += diffusion_coeff * grid[y - 1, x : x + w]
+        buffer[y + h, x : x + w] += diffusion_coeff * grid[y + h, x : x + w]
+        buffer[y : y + h, x - 1] += diffusion_coeff * grid[y : y + h, x - 1]
+        buffer[y : y + h, x + w] += diffusion_coeff * grid[y : y + h, x + w]
 
     for i in range(1, grid.shape[0] - 1):
         for j in range(0, grid.shape[1]):

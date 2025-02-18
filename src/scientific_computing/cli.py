@@ -418,11 +418,11 @@ def animate_time_dependent_diffusion(
     diffusivity: Annotated[
         float, typer.Option("--diffusivity", "-d", help="Diffusivity coefficient")
     ] = 1.0,
-    dt: Annotated[float, typer.Option(help="Time step size")] = 0.001,
+    dt: Annotated[float, typer.Option(help="Time step size")] = 0.00001,
     time_steps: Annotated[
         int, typer.Option(help="Number of time steps in the simulation")
     ] = 1000,
-    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 15,
+    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 100,
     measure_every: Annotated[
         int, typer.Option(help="Number of steps to record information.")
     ] = 5,
@@ -430,9 +430,25 @@ def animate_time_dependent_diffusion(
         RunMode,
         typer.Option(help="Simulation mode."),
     ] = RunMode.Numba,
+    rectangle_ins: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--ins-rect", help="Location of a rectangular insulator: 'x y w h'."
+        ),
+    ] = None,
 ):
     """Animate time dependent diffusion on a cylinder."""
-    cylinder = Cylinder(spatial_intervals=intervals, diffusivity=diffusivity)
+    if (stability_cond := (4 * dt * diffusivity) / ((1 / intervals) ** 2)) > 1:
+        typer.confirm(
+            f"Stability condition not met: 4*dt*D/dx^2 = {stability_cond:.2f} > 1. "
+            "Do you want to proceed?",
+            abort=True,
+        )
+    cylinder = Cylinder(
+        spatial_intervals=intervals,
+        diffusivity=diffusivity,
+        insulators=parse_rect_sinks(rectangle_ins),
+    )
     measurements = cylinder.measure_all(
         run_time=time_steps, dt=dt, mode=mode, measure_every=measure_every
     )
