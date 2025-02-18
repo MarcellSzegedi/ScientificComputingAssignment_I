@@ -131,6 +131,46 @@ class Cylinder:
 
         return measurements
 
+    def measure_all(
+        self,
+        run_time: int,
+        measure_every: int,
+        dt: float,
+        mode: RunMode = RunMode.Python,
+    ):
+        if run_time < 0.0:  # or max(measurement_times) > 1.0:
+            raise ValueError("Measurement times must be greater than zero.")
+        elif run_time > 1000:
+            raise ValueError("Measurement times must be less than 1000.")
+
+        match mode:
+            case RunMode.Python:
+                update = one_step_diffusion
+            case RunMode.Numba:
+                update = one_step_diffusion_numba
+            case RunMode.Rust:
+                measurements = td_diffusion_cylinder(
+                    list(np.arange(0, run_time + 1, measure_every)),
+                    intervals=self.grid.shape[0],
+                    dt=dt,
+                    diffusivity=self.diffusivity,
+                    rect_sinks=self.rectangle_sinks[1:],
+                )
+                self.grid = measurements[-1].copy()
+                return measurements
+
+        measurements = []
+
+        buffer = np.zeros_like(self.grid)
+        for t in range(run_time + 1):
+            if t % measure_every == 0:
+                measurements.append(self.grid.copy())
+            self.grid = update(
+                self.grid, buffer, dt, self.dx, self.diffusivity, self.rectangle_sinks
+            )
+
+        return measurements
+
     def solve_jacobi(
         self,
         epsilon: float = 1e-2,

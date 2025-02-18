@@ -5,15 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
-from scientific_computing.animation import (
-    animate_diffusion,
-)
 from scientific_computing.time_dependent_diffusion import (
     Cylinder,
     Rectangle,
     RunMode,
+    animate_diffusion,
     plot_solution_comparison,
-    time_dependent_diffusion_numba,
 )
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
 from scientific_computing.vibrating_strings_1d.utils.discretize_pde import (
@@ -425,13 +422,22 @@ def animate_time_dependent_diffusion(
     time_steps: Annotated[
         int, typer.Option(help="Number of time steps in the simulation")
     ] = 1000,
-    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 10,
+    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 15,
+    measure_every: Annotated[
+        int, typer.Option(help="Number of steps to record information.")
+    ] = 5,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
 ):
     """Animate time dependent diffusion on a cylinder."""
-    _, grid_history = time_dependent_diffusion_numba(
-        time_steps, intervals, dt, diffusivity
+    cylinder = Cylinder(spatial_intervals=intervals, diffusivity=diffusivity)
+    measurements = cylinder.measure_all(
+        run_time=time_steps, dt=dt, mode=mode, measure_every=measure_every
     )
-    animate_diffusion(grid_history)
+
+    animate_diffusion(measurements)
 
 
 if __name__ == "__main__":
