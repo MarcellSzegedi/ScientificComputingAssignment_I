@@ -2,6 +2,9 @@ from .utils.time_dependent_diffusion import (
     Cylinder as Cylinder,
 )
 from .utils.time_dependent_diffusion import (
+    Rectangle as Rectangle,
+)
+from .utils.time_dependent_diffusion import (
     RunMode as RunMode,
 )
 from .utils.time_dependent_diffusion import (

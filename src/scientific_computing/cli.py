@@ -7,6 +7,7 @@ import typer
 
 from scientific_computing.time_dependent_diffusion import (
     Cylinder,
+    Rectangle,
     RunMode,
     plot_solution_comparison,
 )
@@ -37,6 +38,24 @@ td_diffusion = typer.Typer(
 
 app.add_typer(vibrating_string)
 app.add_typer(td_diffusion)
+
+
+def parse_rect_sinks(
+    rectangle_sinks: list[str] | None,
+) -> list[Rectangle]:
+    if rectangle_sinks:
+        sinks = []
+        for s in rectangle_sinks:
+            s = s.split(" ")
+            if len(s) != 4:
+                raise ValueError(
+                    f"Rectangles should be in format 'x y w h', found: {s}"
+                )
+            x, y, w, h = s
+            sinks.append((float(x), float(y), float(w), float(h)))
+    else:
+        sinks = []
+    return sinks
 
 
 @app.command()
@@ -201,8 +220,13 @@ def jacobi(
         int,
         typer.Option("--max-iters", help="Maximum iterations before termination."),
     ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
 ):
-    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
     cylinder.solve_jacobi(epsilon=epsilon, max_iters=max_iters)
     plt.imshow(cylinder.grid)
     plt.show()
@@ -226,8 +250,13 @@ def gauss_seidel(
         int,
         typer.Option("--max-iters", help="Maximum iterations before termination."),
     ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
 ):
-    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
     cylinder.solve_gauss_seidel(epsilon=epsilon, max_iters=max_iters)
     plt.imshow(cylinder.grid)
     plt.show()
@@ -258,8 +287,13 @@ def sor(
         int,
         typer.Option("--max-iters", help="Maximum iterations before termination."),
     ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
 ):
-    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity)
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
     cylinder.solve_sor(omega=omega, epsilon=epsilon, max_iters=max_iters)
     plt.imshow(cylinder.grid)
     plt.show()
@@ -303,6 +337,10 @@ def plot_timesteps(
         RunMode,
         typer.Option(help="Simulation mode."),
     ] = RunMode.Numba,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
 ):
     # Check stability condition
     if (stability_cond := (4 * dt * diffusivity) / (dx**2)) > 1:
@@ -317,17 +355,19 @@ def plot_timesteps(
     if not measurement_times:
         raise ValueError("Measurements list should be non-empty.")
 
-    # Initialise grid
-    # TODO: What if dx doesn't divide width? How do we tell with floating point
-    #   arithmetic?
+    spatial_intervals = int(width / dx)
+    sinks = parse_rect_sinks(rectangle_sinks)
+
+    cylinder = Cylinder(
+        spatial_intervals=spatial_intervals,
+        diffusivity=diffusivity,
+        sinks=sinks,
+    )
+    grids = cylinder.measure(measurement_times=measurement_times, dt=dt, mode=mode)
 
     ncol = 2
     nrow = len(measurement_times) // ncol + len(measurement_times) % ncol
     fig, axes = plt.subplots(nrow, ncol, layout="constrained", sharex=True, sharey=True)
-
-    spatial_intervals = int(width / dx)
-    cylinder = Cylinder(spatial_intervals=spatial_intervals, diffusivity=diffusivity)
-    grids = cylinder.measure(measurement_times=measurement_times, dt=dt, mode=mode)
     for grid, ax in zip(grids, axes.flatten(), strict=True):
         ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
 
