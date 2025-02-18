@@ -5,15 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
-from scientific_computing.animation import (
-    animate_diffusion,
-)
 from scientific_computing.time_dependent_diffusion import (
     Cylinder,
     Rectangle,
     RunMode,
+    animate_diffusion,
     plot_solution_comparison,
-    time_dependent_diffusion_numba,
 )
 from scientific_computing.vibrating_strings_1d.utils.animation import animate_wave
 from scientific_computing.vibrating_strings_1d.utils.discretize_pde import (
@@ -421,17 +418,42 @@ def animate_time_dependent_diffusion(
     diffusivity: Annotated[
         float, typer.Option("--diffusivity", "-d", help="Diffusivity coefficient")
     ] = 1.0,
-    dt: Annotated[float, typer.Option(help="Time step size")] = 0.001,
+    dt: Annotated[float, typer.Option(help="Time step size")] = 0.00001,
     time_steps: Annotated[
         int, typer.Option(help="Number of time steps in the simulation")
     ] = 1000,
-    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 10,
+    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 100,
+    measure_every: Annotated[
+        int, typer.Option(help="Number of steps to record information.")
+    ] = 5,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
+    rectangle_ins: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--ins-rect", help="Location of a rectangular insulator: 'x y w h'."
+        ),
+    ] = None,
 ):
     """Animate time dependent diffusion on a cylinder."""
-    _, grid_history = time_dependent_diffusion_numba(
-        time_steps, intervals, dt, diffusivity
+    if (stability_cond := (4 * dt * diffusivity) / ((1 / intervals) ** 2)) > 1:
+        typer.confirm(
+            f"Stability condition not met: 4*dt*D/dx^2 = {stability_cond:.2f} > 1. "
+            "Do you want to proceed?",
+            abort=True,
+        )
+    cylinder = Cylinder(
+        spatial_intervals=intervals,
+        diffusivity=diffusivity,
+        insulators=parse_rect_sinks(rectangle_ins),
     )
-    animate_diffusion(grid_history)
+    measurements = cylinder.measure_all(
+        run_time=time_steps, dt=dt, mode=mode, measure_every=measure_every
+    )
+
+    animate_diffusion(measurements)
 
 
 if __name__ == "__main__":

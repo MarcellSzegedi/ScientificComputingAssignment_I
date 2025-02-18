@@ -23,7 +23,7 @@ def plot_3d_cylinder(grid, ax):
     ax.set_zlabel("Y")
 
 
-def animate_diffusion(grid_history, dpi=300, fps=50):
+def animate_diffusion(grid_history, dpi=50, fps=50):
     """Creates an animation of the diffusion process on a 3D cylinder."""
     fig = plt.figure(figsize=(10, 10), dpi=dpi)
     ax = fig.add_subplot(111, projection="3d")
@@ -31,7 +31,8 @@ def animate_diffusion(grid_history, dpi=300, fps=50):
     def update(frame):
         plot_3d_cylinder(grid_history[frame], ax)
 
-    ani = animation.FuncAnimation(fig, update, frames=len(grid_history), interval=100)
-    save_path = "diffusion_cylinder.mp4"
-    ani.save(save_path, writer="ffmpeg", fps=fps)
-    print(f"Animation saved as {save_path}")
+    _ani = animation.FuncAnimation(fig, update, frames=len(grid_history), interval=100)
+    # save_path = "diffusion_cylinder.mp4"
+    # ani.save(save_path, writer="ffmpeg", fps=fps)
+    # print(f"Animation saved as {save_path}")
+    plt.show()
