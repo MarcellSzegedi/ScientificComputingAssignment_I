@@ -3,11 +3,10 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis.strategies import floats, integers
 
-from scientific_computing._core import td_diffusion_cylinder
-from scientific_computing.time_dependent_diffusion.utils import (
+from scientific_computing.time_dependent_diffusion import (
+    Cylinder,
+    RunMode,
     is_stable_scheme,
-    time_dependent_diffusion,
-    time_dependent_diffusion_numba,
 )
 
 
@@ -20,8 +19,8 @@ from scientific_computing.time_dependent_diffusion.utils import (
 )
 def test_grid_shape(time_steps, intervals, dt, D):
     assume(is_stable_scheme(dt, 1 / intervals, D))
-    grid, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
-    assert grid.shape == (intervals, intervals)
+    cylinder = Cylinder(spatial_intervals=intervals, diffusivity=D)
+    assert cylinder.grid.shape == (intervals, intervals)
 
 
 @given(
@@ -42,10 +41,12 @@ def test_is_stable_scheme(intervals, dt, D):
 )
 def test_numba_version_gives_same_results(time_steps, intervals, dt, D):
     assume(is_stable_scheme(dt, 1 / intervals, D))
-    grid_python, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
-    grid_numba, _ = time_dependent_diffusion_numba(time_steps, intervals, dt, D)
+    cylinder_python = Cylinder(intervals, diffusivity=D)
+    cylinder_python.run(time_steps, dt, mode=RunMode.Python)
+    cylinder_numba = Cylinder(intervals, diffusivity=D)
+    cylinder_numba.run(time_steps, dt, mode=RunMode.Numba)
 
-    np.testing.assert_allclose(grid_python, grid_numba)
+    np.testing.assert_allclose(cylinder_python.grid, cylinder_numba.grid)
 
 
 @settings(deadline=None)
@@ -57,12 +58,33 @@ def test_numba_version_gives_same_results(time_steps, intervals, dt, D):
 )
 def test_rust_version_gives_same_results(time_steps, intervals, dt, D):
     assume(is_stable_scheme(dt, 1 / intervals, D))
-    grid_python, _ = time_dependent_diffusion(time_steps, intervals, dt, D)
-    grid_rust = td_diffusion_cylinder([time_steps], intervals, dt, D)[0]
 
-    np.testing.assert_allclose(grid_python, grid_rust)
+    cylinder_python = Cylinder(intervals, diffusivity=D)
+    cylinder_python.run(time_steps, dt, mode=RunMode.Python)
+    cylinder_rust = Cylinder(intervals, diffusivity=D)
+    cylinder_rust.run(time_steps, dt, mode=RunMode.Rust)
+
+    np.testing.assert_allclose(cylinder_python.grid, cylinder_rust.grid)
 
 
-def test_diffusion_time_steps_and_intervals_less_than_one():
+def test_diffusion_run_raises_on_neg_iters():
+    cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
     with pytest.raises(ValueError):
-        time_dependent_diffusion(time_steps=0, intervals=0, dt=0.01, D=5)
+        cylinder.run(n_iters=-1, dt=0.01)
+
+
+def test_diffusion_measure_raises_on_no_measure_times():
+    cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
+    with pytest.raises(ValueError):
+        cylinder.measure(measurement_times=[], dt=0.01)
+
+
+def test_diffusion_measure_raises_on_measure_time_lt_0():
+    cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
+    with pytest.raises(ValueError):
+        cylinder.measure(measurement_times=[-0.0001, 0.1, 0.5], dt=0.01)
+
+
+def test_diffusion_measure_okay_ok_valid_measure_times():
+    cylinder = Cylinder(spatial_intervals=4, diffusivity=5)
+    cylinder.measure(measurement_times=[0.0, 0.1, 0.5, 1.0], dt=0.01)

@@ -5,11 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typer
 
-from scientific_computing._core import td_diffusion_cylinder
 from scientific_computing.animation import (
     animate_diffusion,
 )
 from scientific_computing.time_dependent_diffusion import (
+    Cylinder,
+    Rectangle,
+    RunMode,
     plot_solution_comparison,
     time_dependent_diffusion_numba,
 )
@@ -40,6 +42,24 @@ td_diffusion = typer.Typer(
 
 app.add_typer(vibrating_string)
 app.add_typer(td_diffusion)
+
+
+def parse_rect_sinks(
+    rectangle_sinks: list[str] | None,
+) -> list[Rectangle]:
+    if rectangle_sinks:
+        sinks = []
+        for s in rectangle_sinks:
+            s = s.split(" ")
+            if len(s) != 4:
+                raise ValueError(
+                    f"Rectangles should be in format 'x y w h', found: {s}"
+                )
+            x, y, w, h = s
+            sinks.append((float(x), float(y), float(w), float(h)))
+    else:
+        sinks = []
+    return sinks
 
 
 @app.command()
@@ -187,10 +207,111 @@ def animate_vibrating_string(
 
 
 @td_diffusion.command()
+def jacobi(
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
+):
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
+    cylinder.solve_jacobi(epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
+def gauss_seidel(
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
+):
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
+    cylinder.solve_gauss_seidel(epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
+def sor(
+    omega: Annotated[
+        float,
+        typer.Option(
+            "--omega",
+            "-w",
+        ),
+    ],
+    n: Annotated[
+        int,
+        typer.Option("-n", help="Number of intervals to divide spatial domain into."),
+    ] = 50,
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
+):
+    sinks = parse_rect_sinks(rectangle_sinks)
+    cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
+    cylinder.solve_sor(omega=omega, epsilon=epsilon, max_iters=max_iters)
+    plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
 def plot_timesteps(
-    measurements: Annotated[
-        list[int],
-        typer.Option("--measurement", "-m", help="Timepoints to plot system state."),
+    measurement_times: Annotated[
+        list[float],
+        typer.Option(
+            "--measurement",
+            "-m",
+            help="Timepoints to plot system state, in range [0,1].",
+        ),
     ],
     diffusivity: Annotated[
         float, typer.Option("--diffusivity", "-d", help="Diffusivity coefficient")
@@ -216,6 +337,14 @@ def plot_timesteps(
             help="Filepath to save plot to (including extension)",
         ),
     ] = None,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
 ):
     # Check stability condition
     if (stability_cond := (4 * dt * diffusivity) / (dx**2)) > 1:
@@ -226,20 +355,23 @@ def plot_timesteps(
         )
 
     # Get sorted list of unique measurement times
-    measurements = sorted(list(set(measurements)))
-    if not measurements:
+    measurement_times = sorted(list(set(measurement_times)))
+    if not measurement_times:
         raise ValueError("Measurements list should be non-empty.")
 
-    # Initialise grid
-    # TODO: What if dx doesn't divide width? How do we tell with floating point
-    #   arithmetic?
+    spatial_intervals = int(width / dx)
+    sinks = parse_rect_sinks(rectangle_sinks)
+
+    cylinder = Cylinder(
+        spatial_intervals=spatial_intervals,
+        diffusivity=diffusivity,
+        sinks=sinks,
+    )
+    grids = cylinder.measure(measurement_times=measurement_times, dt=dt, mode=mode)
 
     ncol = 2
-    nrow = len(measurements) // ncol + len(measurements) % ncol
+    nrow = len(measurement_times) // ncol + len(measurement_times) % ncol
     fig, axes = plt.subplots(nrow, ncol, layout="constrained", sharex=True, sharey=True)
-
-    spatial_intervals = int(width / dx)
-    grids = td_diffusion_cylinder(measurements, spatial_intervals, dt, diffusivity)
     for grid, ax in zip(grids, axes.flatten(), strict=True):
         ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
 
@@ -251,17 +383,37 @@ def plot_timesteps(
 
 @td_diffusion.command(name="compare")
 def compare_simulation_to_analytical(
-    dt: Annotated[float, typer.Option(help="Time step size")] = 0.001,
-    time_steps: Annotated[
-        int, typer.Option(help="Number of time steps in the simulation")
-    ] = 1000,
-    intervals: Annotated[int, typer.Option(help="Number of spatial intervals")] = 10,
+    measurement_times: Annotated[
+        list[float] | None,
+        typer.Option(
+            "--measurement",
+            "-m",
+            help=(
+                "Timepoints to plot system state, in range [0,1]. "
+                "Default: [0.001, 0.01, 0.1, 1.0]"
+            ),
+        ),
+    ] = None,
+    dt: Annotated[
+        float,
+        typer.Option(help="Time step size"),
+    ] = 0.001,
+    intervals: Annotated[
+        int,
+        typer.Option(help="Number of spatial intervals"),
+    ] = 10,
     terms: Annotated[
-        int, typer.Option(help="Number of terms to use in analytical solution")
+        int,
+        typer.Option(help="Number of terms to use in analytical solution"),
     ] = 100,
+    mode: Annotated[
+        RunMode,
+        typer.Option(help="Simulation mode."),
+    ] = RunMode.Numba,
 ):
     """Plot simulation vs analytical solution for time dependent diffusion."""
-    plot_solution_comparison(dt, time_steps, intervals, terms)
+    measurement_times = measurement_times or [0.001, 0.01, 0.1, 1.0]
+    plot_solution_comparison(dt, measurement_times, intervals, terms, mode)
 
 
 @td_diffusion.command(name="animate")
