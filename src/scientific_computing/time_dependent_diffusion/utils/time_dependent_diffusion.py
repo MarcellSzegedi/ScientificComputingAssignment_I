@@ -72,11 +72,9 @@ class Cylinder:
             self.circle_sinks = circle_sinks
 
         if insulators is None:
-            self.rectangle_insulators = [(0, 0, 0, 0)]
-            self.circle_insulators = []
+            self.rectangle_ins = [(0, 0, 0, 0)]
         else:
-            rectangle_insulators = [(0, 0, 0, 0)]
-            circle_insulators = []
+            rectangle_ins = [(0, 0, 0, 0)]
             for obj in insulators:
                 match obj:
                     case (_, _, _, _):
@@ -85,11 +83,10 @@ class Cylinder:
                                 f"Rectangle must fit inside cylinder with dimensions "
                                 f"1x1. Found rectangle of shape: {obj}."
                             )
-                        rectangle_insulators.append(discretise_rect(obj))
+                        rectangle_ins.append(discretise_rect(obj))
                     case (_, _, _):
                         raise NotImplementedError
-            self.rectangle_insulators = rectangle_insulators
-            self.circle_insulators = circle_insulators
+            self.rectangle_ins = rectangle_ins
 
     def run(self, n_iters: int, dt: float, mode: RunMode = RunMode.Python):
         if n_iters < 0:
@@ -107,13 +104,20 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
+                    rect_ins=self.rectangle_ins,
                 )[-1]
                 return
 
         buffer = np.zeros_like(self.grid)
         for _ in range(n_iters):
             self.grid = update(
-                self.grid, buffer, dt, self.dx, self.diffusivity, self.rectangle_sinks
+                self.grid,
+                buffer,
+                dt,
+                self.dx,
+                self.diffusivity,
+                self.rectangle_sinks,
+                self.rectangle_ins,
             )
 
     def measure(
@@ -137,6 +141,7 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
+                    rect_ins=self.rectangle_ins[1:],
                 )
                 self.grid = measurements[-1].copy()
                 return measurements
@@ -149,7 +154,12 @@ class Cylinder:
             if t in measurement_idxes:
                 measurements.append(self.grid.copy())
             self.grid = update(
-                self.grid, buffer, dt, self.dx, self.diffusivity, self.rectangle_sinks
+                self.grid,
+                buffer,
+                dt,
+                self.dx,
+                self.diffusivity,
+                self.rectangle_sinks,
             )
 
         return measurements
@@ -178,6 +188,7 @@ class Cylinder:
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
+                    rect_ins=self.rectangle_ins[1:],
                 )
                 self.grid = measurements[-1].copy()
                 return measurements
@@ -195,7 +206,7 @@ class Cylinder:
                 self.dx,
                 self.diffusivity,
                 self.rectangle_sinks,
-                self.rectangle_insulators,
+                self.rectangle_ins,
             )
 
         return measurements
@@ -428,6 +439,7 @@ def one_step_diffusion(
     dx: float,
     D: float,
     rectangle_sinks: list[tuple[int, int, int, int]],
+    rectangle_ins: list[tuple[int, int, int, int]],
 ):
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):
