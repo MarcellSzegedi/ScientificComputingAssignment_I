@@ -6,3 +6,10 @@ def td_diffusion_cylinder(
     diffusivity: float,
     rect_sinks: list[tuple[int, int, int, int]],
 ): ...
+def td_diffusion_cylinder_z_order(
+    measurement_timesteps: list[int],
+    intervals: int,
+    dt: float,
+    diffusivity: float,
+    rect_sinks: list[tuple[int, int, int, int]],
+): ...

@@ -7,7 +7,9 @@ import numpy.typing as npt
 from numba import njit
 from scipy.special import erfc
 
-from scientific_computing._core import td_diffusion_cylinder
+from scientific_computing._core import (
+    td_diffusion_cylinder,
+)
 
 type Rectangle = tuple[float, float, float, float]
 type Circle = tuple[float, float, float]

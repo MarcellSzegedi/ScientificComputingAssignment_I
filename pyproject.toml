@@ -29,6 +29,7 @@ scicomp = "scientific_computing.cli:app"
 module-name = "scientific_computing._core"
 python-packages = ["scientific_computing"]
 python-source = "src"
+cargo-extra-args = "--features extension-module"
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
