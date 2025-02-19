@@ -430,6 +430,10 @@ def animate_time_dependent_diffusion(
         RunMode,
         typer.Option(help="Simulation mode."),
     ] = RunMode.Numba,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
     rectangle_ins: Annotated[
         list[str] | None,
         typer.Option(
@@ -447,6 +451,7 @@ def animate_time_dependent_diffusion(
     cylinder = Cylinder(
         spatial_intervals=intervals,
         diffusivity=diffusivity,
+        sinks=parse_rect_sinks(rectangle_sinks),
         insulators=parse_rect_sinks(rectangle_ins),
     )
     measurements = cylinder.measure_all(
