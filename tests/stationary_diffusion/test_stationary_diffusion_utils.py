@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
-from numpy.conftest import dtype
 
 from scientific_computing.stationary_diffusion.utils.common_functions import (
     reset_grid_wrapping,

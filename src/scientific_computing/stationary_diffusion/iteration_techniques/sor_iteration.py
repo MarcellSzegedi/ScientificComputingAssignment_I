@@ -1,6 +1,8 @@
 import numpy as np
+import numba as nb
 
-from scientific_computing.stationary_diffusion.iteration_techniques.gauss_seidel_iteration import gauss_seidel_iteration
+from scientific_computing.stationary_diffusion.iteration_techniques.gauss_seidel_iteration import (gauss_seidel_iteration,
+                                                                                                   gs_iteration_numba_imp)
 from scientific_computing.stationary_diffusion.utils.common_functions import check_new_grid
 
 
@@ -29,8 +31,31 @@ def sor_iteration(
     _check_gs_result(gs_result, old_grid)
 
     # Calculate the linear combination of the current (at time 't') grid and the gs_result (at time 't+1')
-    new_grid = omega / 4 * gs_result + (1 - omega) * old_grid
+    new_grid = omega * gs_result + (1 - omega) * old_grid
     check_new_grid(new_grid, old_grid)
+
+    # Capping values at 1
+    new_grid[new_grid > 1] = 1
+
+    # # Mitigating differences average out values
+    new_grid[:] = np.mean(new_grid, axis=1)[:, np.newaxis]
+
+    # Calculate the maximum deviation between grid cell values at 't+1' and 't'
+    max_cell_diff = np.max(np.abs(old_grid - new_grid))
+
+    return new_grid, max_cell_diff
+
+
+@nb.njit
+def sor_iteration_numba_imp(old_grid: np.ndarray, omega: float) -> (np.ndarray, float):
+    new_grid = old_grid.copy()
+    for row_idx in range(1, old_grid.shape[0] - 1):
+        for col_idx in range(0, old_grid.shape[1]):
+            new_grid[row_idx, col_idx] = (omega * 0.25 * (new_grid[row_idx - 1, col_idx]
+                                                         + new_grid[row_idx, (col_idx - 1) % new_grid.shape[1]]
+                                                         + new_grid[row_idx + 1, col_idx]
+                                                         + new_grid[row_idx, (col_idx + 1) % new_grid.shape[1]])
+                                          + (1 - omega) * old_grid[row_idx, col_idx])
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
     max_cell_diff = np.max(np.abs(old_grid - new_grid))

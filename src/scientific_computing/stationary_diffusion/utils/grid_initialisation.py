@@ -20,10 +20,33 @@ def initialize_grid(delta: float) -> (np.ndarray, int):
     _check_delta_param(delta)
 
     # Calculate grid size
-    grid_size = _calc_grid_size(delta)
+    grid_size = calc_grid_size(delta)
 
     # Initialise grid
     grid = create_grid(grid_size)
+
+    return grid, grid_size
+
+
+def initialize_grid_numba(delta: float) -> (np.ndarray, int):
+    """
+    Creates a grid (2D numpy array) where every value is going to represent a delta
+    space step (in this case distance along x and y coordinates)
+
+    Args:
+        delta: (float) The length of discretization step of the continuous field.
+
+    Returns:
+        The final grid (2D numpy array).
+    """
+    # Checks delta parameter
+    _check_delta_param(delta)
+
+    # Calculate grid size
+    grid_size = calc_grid_size(delta)
+
+    # Initialise grid
+    grid = create_grid_numba(grid_size)
 
     return grid, grid_size
 
@@ -49,7 +72,28 @@ def create_grid(grid_size: int) -> np.ndarray:
     return grid
 
 
-def _calc_grid_size(delta: float) -> int:
+def create_grid_numba(grid_size: int) -> np.ndarray:
+    """
+    Create a grid based on the following rules:
+    - Every value in the grid is set to 0
+    - Wrap the top with ones
+
+    Args:
+        grid_size: (int) size of the grid.
+
+    Returns:
+        2D numpy array representing the grid built based on the initialisation rules.
+    """
+    # Initialise a 2D numpy array of the proper size
+    grid = np.zeros(shape=(grid_size, grid_size))
+
+    # Set top row to 1
+    grid[0, :] = 1
+
+    return grid
+
+
+def calc_grid_size(delta: float) -> int:
     """
     Calculates the size of the grid based on the given value of the length of the
     discretization step (delta).
@@ -58,8 +102,7 @@ def _calc_grid_size(delta: float) -> int:
         delta: (float) The length of discretization step of the continuous field.
 
     Returns:
-        The size of the grid
-
+        The size of the grid.
     """
     return (
         int(LATTICE_LENGTH // delta)

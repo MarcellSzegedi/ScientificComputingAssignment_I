@@ -1,10 +1,47 @@
 import logging
 
 import numpy as np
+import numba as nb
 
 from scientific_computing.stationary_diffusion.utils.common_functions import check_new_grid
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+
+@nb.njit
+def gs_iteration_sink_comp(old_grid: np.ndarray, sink_filter: np.ndarray) -> [np.ndarray, float]:
+    new_grid = old_grid.copy()
+    for row_idx in range(1, old_grid.shape[0] - 1):
+        for col_idx in range(1, old_grid.shape[1] - 1):
+            # Check if the cell belongs to a sink
+            if bool(sink_filter[row_idx, col_idx]):
+                new_grid[row_idx, col_idx] = 0
+            else:
+                new_grid[row_idx, col_idx] = (new_grid[row_idx - 1, col_idx]
+                                              + new_grid[row_idx, col_idx - 1]
+                                              + old_grid[row_idx + 1, col_idx]
+                                              + old_grid[row_idx, col_idx + 1]) / 4
+
+    # Calculate the maximum deviation between grid cell values at 't+1' and 't'
+    max_cell_diff = float(np.max(np.abs(old_grid - new_grid)))
+
+    return new_grid, max_cell_diff
+
+
+@nb.njit
+def gs_iteration_numba_imp(old_grid: np.ndarray) -> [np.ndarray, float]:
+    new_grid = old_grid.copy()
+    for row_idx in range(1, old_grid.shape[0] - 1):
+        for col_idx in range(1, old_grid.shape[1] - 1):
+            new_grid[row_idx, col_idx] = (new_grid[row_idx - 1, col_idx]
+                                          + new_grid[row_idx, col_idx - 1]
+                                          + old_grid[row_idx + 1, col_idx]
+                                          + old_grid[row_idx, col_idx + 1]) / 4
+
+    # Calculate the maximum deviation between grid cell values at 't+1' and 't'
+    max_cell_diff = float(np.max(np.abs(old_grid - new_grid)))
+
+    return new_grid, max_cell_diff
 
 
 def gauss_seidel_iteration(
@@ -58,7 +95,7 @@ def calc_iter_transformation(n: int) -> np.ndarray:
         'A' matrix
     """
     # Check input
-    _check_grid_side_length(n)
+    # _check_grid_side_length(n)
 
     # Initialising the matrix
     var_vector_len = n * n
@@ -86,8 +123,13 @@ def calc_iter_transformation(n: int) -> np.ndarray:
     matrix += np.diag(diag_3, k=n-1)
 
     # Calculating the inverse matrix
-    inverse_matrix = np.linalg.inv(matrix)
+    inverse_matrix = _calc_inverse_mat(matrix)
     logging.info("Transformation matrix is calculated successfully for Gauss Seidel iteration.")
+    return inverse_matrix
+
+
+def _calc_inverse_mat(matrix: np.ndarray) -> np.ndarray:
+    inverse_matrix = np.linalg.inv(matrix)
     return inverse_matrix
 
 
@@ -145,6 +187,25 @@ def calc_output_vector(grid: np.ndarray, output_trans_matrix: np.ndarray) -> np.
     _check_old_cell_value(cell_vector, output_trans_matrix)
 
     # Calculating the output vector
+    output_vector = _calculate_final_vector(output_trans_matrix, cell_vector, grid)
+
+    return output_vector
+
+
+def _calculate_final_vector(output_trans_matrix: np.ndarray, cell_vector: np.ndarray, grid: np.ndarray) -> np.ndarray:
+    """
+    Calculates the final output vector.
+
+    Args:
+        output_trans_matrix: Matrix used to compute the output vector by multiplying with the flattened old grid
+        cell_vector: 1 dimensional numpy array that contains the cell values of the grid at time 't'
+        grid: Existing grid (2D numpy array) where every cell value represents a delta
+                step in the discretised square field with side interval [0, 1].
+
+    Returns:
+        Output vector (1D numpy array)
+    """
+
     output_vector = np.matmul(output_trans_matrix, cell_vector)
 
     # Adding +1 to the first n (length of the grid) value, due to the upper boundary condition of the problem

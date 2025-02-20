@@ -1,8 +1,11 @@
 import unittest
 from unittest.mock import patch
+from hypothesis import given, settings
+from hypothesis.strategies import floats
 
 import numpy as np
 
+from scientific_computing.stationary_diffusion.utils import initialize_grid
 from scientific_computing.stationary_diffusion.iteration_techniques import (
     jacobi_iteration,
 )
@@ -15,28 +18,36 @@ from scientific_computing.stationary_diffusion.iteration_techniques.gauss_seidel
 from scientific_computing.stationary_diffusion.iteration_techniques.sor_iteration import (
     sor_iteration
 )
+from scientific_computing.stationary_diffusion.main import main_sor_iter
 
 
-# class TestJacobiIteration(unittest.TestCase):
-    # def test_output_shape(self):
-    #     """Testing that the output grid has the correct shape."""
-    #     delta = 0.1
-    #     iters = 1000
-    #     grid, _ = initialize_grid(delta)
-    #     result, _ = jacobi_iteration(grid, iters)
-    #     self.assertEqual(result.shape, grid.shape)
-    #
-    # def test_convergence(self):
-    #     """Testing that Jacobi iteration converges properly."""
-    #     delta = 0.1
-    #     iters = 1000
-    #     grid, _ = initialize_grid(delta)
-    #     _, max_diff = jacobi_iteration(grid, iters)
-    #     self.assertLess(max_diff, 1e-5, "Jacobi iteration did not converge properly.")
-    #
-    # def test_boundary_conditions(self):
-    #     """Testing that boundary conditions remain unchanged."""
+class TestJacobiIteration(unittest.TestCase):
+    @unittest.expectedFailure
+    def test_output_shape(self):
+        """Testing that the output grid has the correct shape."""
+        delta = 0.1
+        iters = 1000
+        grid, _ = initialize_grid(delta)
+        result, _ = jacobi_iteration(grid, iters)
+        self.assertEqual(result.shape, grid.shape)
 
+    @unittest.expectedFailure
+    def test_convergence(self):
+        """Testing that Jacobi iteration converges properly."""
+        delta = 0.1
+        iters = 1000
+        grid, _ = initialize_grid(delta)
+        _, max_diff = jacobi_iteration(grid, iters)
+        self.assertLess(max_diff, 1e-5, "Jacobi iteration did not converge properly.")
+
+    @unittest.expectedFailure
+    def test_boundary_conditions(self):
+        """Testing that boundary conditions remain unchanged."""
+        delta = 0.1
+        iters = 1000
+        grid, _ = initialize_grid(delta)
+        _, max_diff = jacobi_iteration(grid, iters)
+        self.assertLess(max_diff, 1e-5, "Jacobi iteration did not converge properly.")
 
 class TestMatrixComputations(unittest.TestCase):
     @classmethod
@@ -241,3 +252,26 @@ class TestSorIterations(unittest.TestCase):
         mock_gauss_seidel_iteration.return_value = (self.invalid_gs_subresult, 1)
         with self.assertRaises(ValueError):
             sor_iteration(self.old_grid, self.trans_matrix, self.output_vec_trans_mat, self.omega)
+
+    @patch("scientific_computing.stationary_diffusion.main.MAX_ITER", 500)
+    @settings(max_examples=5)
+    @given(
+        delta=floats(min_value=0.01, max_value=0.2),
+        omega=floats(min_value=1.71, max_value=1.99)
+    )
+    def test_sor_iteration_invalid_omega_value(self, delta, omega):
+        grid_hist, _ = main_sor_iter(delta, omega)
+        last_frame = grid_hist[-1]
+        self.assertTrue(np.all(last_frame == last_frame[:, [0]], axis=0),
+                        f"{omega} and {int(1 / delta) + 1} are not compatible.")
+        print(f"Testing with parameters {delta}, {omega} is DONE")
+
+    @patch("scientific_computing.stationary_diffusion.main.MAX_ITER", 500)
+    def test_sor_iteration_invalid_input_comb(self):
+        for omega_param in np.linspace(1.1, 1.99, 10):
+            for delta_param in np.linspace(1/25, 0.2, 10):
+                grid_hist, _ = main_sor_iter(delta_param, omega_param)
+                last_frame = grid_hist[-1]
+                self.assertTrue(bool(np.all(np.abs(last_frame - last_frame[:, [0]]) < 1e-15)),
+                                f"{omega_param} and {int(1 / delta_param) + 1} are not compatible.")
+                print(f"Testing with parameters {delta_param}, {omega_param} is DONE")
