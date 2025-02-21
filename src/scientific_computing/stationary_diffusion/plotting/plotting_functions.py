@@ -67,6 +67,8 @@ def plot_delta_omega_connection(
 
     plt.legend(fontsize=12, title="Grid Size")
 
+    plt.yscale("log")
+
     plt.savefig(os.path.join(save_dir, file_name), dpi=500)
     plt.show()
 
@@ -84,42 +86,84 @@ def plot_convergence(
     jacobi_lines = []
     for i, iter_grid in enumerate(jacobi_result):
         if _select_iter_steps_to_plot(i, jacobi_result):
-            line, = ax[0].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{int((i / jacobi_result.shape[0]) * 100)} %")
+            label_name = int((i / jacobi_result.shape[0]) * 100) if int((i / jacobi_result.shape[0]) * 100) != 0 else 1
+            line, = ax[0].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{label_name} %")
             jacobi_lines.append(line)
     for i, line in enumerate(jacobi_lines):
         _add_label_above_line(ax[0], line, i, len(jacobi_lines))
-    ax[0].plot(np.linspace(0, jacobi_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3)
+    ax[0].plot(np.linspace(0, jacobi_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3, alpha=0.5)
 
     # Gauss-Seidel
     gs_lines = []
     for i, iter_grid in enumerate(gs_result):
         if _select_iter_steps_to_plot(i, gs_result):
-            line, = ax[1].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{int((i / gs_result.shape[0]) * 100)} %")
+            label_name = int((i / gs_result.shape[0]) * 100) if int((i / gs_result.shape[0]) * 100) != 0 else 1
+            line, = ax[1].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{label_name} %")
             gs_lines.append(line)
     for i, line in enumerate(gs_lines):
         _add_label_above_line(ax[1], line, i, len(gs_lines))
-    ax[1].plot(np.linspace(0, gs_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3)
+    ax[1].plot(np.linspace(0, gs_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3, alpha=0.5)
 
     # SOR
     sor_lines = []
     for i, iter_grid in enumerate(sor_result):
         if _select_iter_steps_to_plot(i, sor_result):
-            line, = ax[2].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{int((i / sor_result.shape[0]) * 100)} %")
+            label_name = int((i / sor_result.shape[0]) * 100) if int((i / sor_result.shape[0]) * 100) != 0 else 1
+            line, = ax[2].plot(np.arange(iter_grid.shape[0]), iter_grid[::-1], label=f"{label_name} %")
             sor_lines.append(line)
     for i, line in enumerate(sor_lines):
         _add_label_above_line(ax[2], line, i, len(sor_lines))
-    ax[2].plot(np.linspace(0, sor_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3)
+    ax[2].plot(np.linspace(0, sor_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3, alpha=0.5)
 
     # Titles and labels
-    fig.suptitle(f"Heat Distribution along the Object for Various Iterations", fontsize=18, fontweight="bold")
-    ax[0].set_title("Jacobi Iteration", fontsize=12)
-    ax[1].set_title("Gauss-Seidel Iteration", fontsize=12)
-    ax[2].set_title("Successive Over Relaxation", fontsize=12)
+    fig.suptitle(f"Heat Distribution along the Object for Various Iterations", fontsize=25, fontweight="bold")
+    ax[0].set_title("Jacobi Iteration", fontsize=20)
+    ax[1].set_title("Gauss-Seidel Iteration", fontsize=20)
+    ax[2].set_title("Successive Over Relaxation", fontsize=20)
     for i in range(3):
-        ax[i].set_xlabel("Object")
-        ax[i].set_ylabel("Temperature")
+        ax[i].set_xlabel("Object Cut Along y Axis", fontsize=18)
+        ax[i].set_ylabel("Temperature", fontsize=18)
 
     # Save and show
+    plt.savefig(os.path.join(save_dir, file_name), dpi=500)
+    plt.show()
+
+
+def plot_delta_omega_connection_with_sink(
+        sor_results: Dict[float, Dict[float, float]],
+        sor_results_sink: Dict[float, Dict[float, float]],
+        file_name: str,
+        save_dir: str
+) -> None:
+
+    colors = ["red", "green", "blue", "purple", "yellow"]
+    plt.figure(figsize=(10, 10))
+    # Plot results without sink
+    for idx, (delta, sor_result_collection) in enumerate(sor_results.items()):
+        omega = list(sor_result_collection.keys())
+        results = list(sor_result_collection.values())
+        grid_size = calc_grid_size(delta)
+        plt.plot(omega, results, label=f"{grid_size}", alpha=0.7, linestyle="--", color=colors[idx])
+
+    # Plot results with sink
+    for idx, (delta, sor_result_collection) in enumerate(sor_results_sink.items()):
+        omega = list(sor_result_collection.keys())
+        results = list(sor_result_collection.values())
+        grid_size = calc_grid_size(delta)
+        plt.plot(omega, results, label=f"{grid_size}", color=colors[idx])
+
+    plt.title("Iteration Steps to Convergence\nas a Function of Grid Size and SOR's ω Parameter\n"
+              "(Dashed lines represent simulations without a sink,\nwhile solid lines represent those with a sink.)",
+              fontsize=18,
+              fontweight="bold")
+    plt.xlabel("ω Parameter", fontsize=15)
+    plt.ylabel("Number of Iterations Needed to Finish", fontsize=15)
+    plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
+
+    plt.legend(fontsize=12, title="Grid Size")
+
+    plt.yscale("log")
+
     plt.savefig(os.path.join(save_dir, file_name), dpi=500)
     plt.show()
 
@@ -129,9 +173,10 @@ def _calc_x_axis(result: np.ndarray) -> np.ndarray:
 
 
 def _select_iter_steps_to_plot(i: int, iteration_ts: np.ndarray) -> bool:
-    steps_to_plot = np.array([0.0001, 0.1, 0.25, 0.99])
+    steps_to_plot = np.array([0, 0.1, 0.25, 0.9999999])
     steps_to_plot = steps_to_plot * iteration_ts.shape[0]
     steps_to_plot = steps_to_plot.astype(int) + 1
+    steps_to_plot[steps_to_plot > iteration_ts.shape[0] - 1] = iteration_ts.shape[0] - 1
     if i in steps_to_plot:
         return True
     return False
@@ -162,5 +207,5 @@ def _add_label_above_line(axis, line, index, total_lines):
 
     # Add the label at the computed position, rotated to follow the line
     axis.text(int(x_pos * 0.97), y_pos, line.get_label(),
-              fontsize=12, fontweight="bold", color=line.get_color(),
+              fontsize=15, fontweight="bold", color=line.get_color(),
               ha="center", va="bottom", rotation=slope_angle)

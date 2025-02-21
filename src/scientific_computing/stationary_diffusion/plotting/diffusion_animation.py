@@ -114,7 +114,7 @@ def _check_grid_histories(
         sor_grid_hist: Optional[np.ndarray]
 ) -> None:
     if jac_grid_hist.shape[0] != history_len:
-        raise ValueError(f"Grid history of the Jacobian iteration approach {jac_grid_hist.shape[0]}does not match with "
+        raise ValueError(f"Grid history of the Jacobian iteration approach {jac_grid_hist.shape[0]} does not match with "
                          f"the required history length {history_len}.")
     if gs_grid_hist.shape[0] != history_len:
         raise ValueError(f"Grid history of the Gauss - Seidel iteration approach {gs_grid_hist.shape[0]} does not match "

@@ -28,7 +28,7 @@ class TestJacobiIteration(unittest.TestCase):
         delta = 0.1
         iters = 1000
         grid, _ = initialize_grid(delta)
-        result, _ = jacobi_iteration(grid, iters)
+        result, _ = jacobi_iteration(grid)
         self.assertEqual(result.shape, grid.shape)
 
     @unittest.expectedFailure
@@ -37,7 +37,7 @@ class TestJacobiIteration(unittest.TestCase):
         delta = 0.1
         iters = 1000
         grid, _ = initialize_grid(delta)
-        _, max_diff = jacobi_iteration(grid, iters)
+        _, max_diff = jacobi_iteration(grid)
         self.assertLess(max_diff, 1e-5, "Jacobi iteration did not converge properly.")
 
     @unittest.expectedFailure
@@ -46,7 +46,7 @@ class TestJacobiIteration(unittest.TestCase):
         delta = 0.1
         iters = 1000
         grid, _ = initialize_grid(delta)
-        _, max_diff = jacobi_iteration(grid, iters)
+        _, max_diff = jacobi_iteration(grid)
         self.assertLess(max_diff, 1e-5, "Jacobi iteration did not converge properly.")
 
 class TestMatrixComputations(unittest.TestCase):

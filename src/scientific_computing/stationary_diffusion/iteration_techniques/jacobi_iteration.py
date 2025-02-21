@@ -1,44 +1,40 @@
+from typing import Optional
+
 import numpy as np
+import numba as nb
 
 
-def jacobi_iteration(grid: np.ndarray) -> (np.ndarray, float):
+@nb.njit
+def apply_jacobi_iter_step(old_grid: np.ndarray, sink: Optional[np.ndarray]=None) -> (np.ndarray, float):
     """
-    Implements the Jacobi iteration to solve the diffusion equation.
+    Applies one Jacobi iteration to an existing grid.
 
-    :param iters: Maximum number of iterations to achieve convergence.
-    :return: The computed solution grid of the diffusion PDE solved by the
-        Jacobi iteration.
+    Args:
+        old_grid: Existing grid (2D numpy array) where every cell value represents a delta
+                    step in the discretised square field with side interval [0, 1].
+        sink: 2D numpy array filled with boolean values which are True if the cell in the corresponding index is part
+                    of the sink, False otherwise.
+
+    Returns:
+        2D NumPy array containing the updated values after a SOR iteration and the maximum difference between the new
+        and the old grid
     """
+    # Copying the grid not to overwrite existing values
+    new_grid = old_grid.copy()
 
-    # grid = initialize_grid(delta)
-    # N = grid.shape[0]
-    # new_grid = grid.copy()
-    # for _ in range(iters):
-    #     old_grid = new_grid.copy()
-    #     for i in range(1, N - 1):
-    #         for j in range(1, N - 1):
-    #             new_grid[i, j] = 0.25 * (
-    #                 old_grid[i + 1, j]
-    #                 + old_grid[i - 1, j]
-    #                 + old_grid[i, j + 1]
-    #                 + old_grid[i, j - 1]
-    #             )
-    #     max_diff = np.max(np.abs(new_grid - old_grid))
-    #     if max_diff < tol:
-    #         break
-    # return new_grid, max_diff
-
-
-    # Creating neighbor arrays
-    upper_neighbor = grid[:-2, 1:-1]
-    lower_neighbor = grid[2:, 1:-1]
-    left_neighbor = grid[1:-1, :-2]
-    right_neighbor = grid[1:-1, 2:]
-
-    # Calculating the new grid
-    new_grid = np.mean([upper_neighbor, lower_neighbor, left_neighbor, right_neighbor], axis=0)
+    # Apply Jacobi iteration approach
+    for row_idx in range(1, old_grid.shape[0] - 1):
+        for col_idx in range(0, old_grid.shape[1]):
+            # Check if the cell is part of the sink
+            if sink is not None and sink[row_idx, col_idx]:
+                new_grid[row_idx, col_idx] = 0
+            else:
+                new_grid[row_idx, col_idx] = 0.25 * (old_grid[row_idx - 1, col_idx]
+                                                     + old_grid[row_idx, (col_idx - 1) % old_grid.shape[1]]
+                                                     + old_grid[row_idx + 1, col_idx]
+                                                     + old_grid[row_idx, (col_idx + 1) % new_grid.shape[1]])
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
-    max_cell_diff = float(np.max(np.abs(new_grid - grid[1:-1, 1:-1])))
-
+    max_cell_diff = np.max(np.abs(old_grid - new_grid))
+                
     return new_grid, max_cell_diff
