@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+
 from scientific_computing.stationary_diffusion.main import IterationApproaches
 
 
@@ -22,13 +23,21 @@ class TestJacobiIteration(unittest.TestCase):
     def test_convergence(self):
         """Testing that Jacobi iteration converges properly."""
         a, max_diff_hist, _ = self.iteration_instance.jacobi_iteration(self.delta)
-        self.assertLess(max_diff_hist[-1], 1e-5, "Jacobi iteration did not converge properly.")
+        self.assertLess(
+            max_diff_hist[-1], 1e-5, "Jacobi iteration did not converge properly."
+        )
 
     def test_boundary_conditions(self):
         """Testing that boundary conditions remain unchanged."""
         grid_hist, _, _ = self.iteration_instance.jacobi_iteration(self.delta)
-        self.assertTrue(np.all(np.isin(grid_hist[:, 0, :], [1])), "Jacobi iteration changed the top boundary condition.")
-        self.assertTrue(np.all(np.isin(grid_hist[:, -1, :], [0])), "Jacobi iteration changed the bottom boundary condition.")
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, 0, :], [1])),
+            "Jacobi iteration changed the top boundary condition.",
+        )
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, -1, :], [0])),
+            "Jacobi iteration changed the bottom boundary condition.",
+        )
 
 
 class TestGaussSeidel(unittest.TestCase):
@@ -49,13 +58,21 @@ class TestGaussSeidel(unittest.TestCase):
     def test_convergence(self):
         """Testing that Jacobi iteration converges properly."""
         a, max_diff_hist, _ = self.iteration_instance.gauss_seidel_iteration(self.delta)
-        self.assertLess(max_diff_hist[-1], 1e-5, "GS iteration did not converge properly.")
+        self.assertLess(
+            max_diff_hist[-1], 1e-5, "GS iteration did not converge properly."
+        )
 
     def test_boundary_conditions(self):
         """Testing that boundary conditions remain unchanged."""
         grid_hist, _, _ = self.iteration_instance.gauss_seidel_iteration(self.delta)
-        self.assertTrue(np.all(np.isin(grid_hist[:, 0, :], [1])), "GS iteration changed the top boundary condition.")
-        self.assertTrue(np.all(np.isin(grid_hist[:, -1, :], [0])), "GS iteration changed the bottom boundary condition.")
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, 0, :], [1])),
+            "GS iteration changed the top boundary condition.",
+        )
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, -1, :], [0])),
+            "GS iteration changed the bottom boundary condition.",
+        )
 
 
 class TestSOR(unittest.TestCase):
@@ -76,11 +93,21 @@ class TestSOR(unittest.TestCase):
 
     def test_convergence(self):
         """Testing that Jacobi iteration converges properly."""
-        a, max_diff_hist, _ = self.iteration_instance.sor_iteration(self.delta, self.omega)
-        self.assertLess(max_diff_hist[-1], 1e-5, "SOR iteration did not converge properly.")
+        a, max_diff_hist, _ = self.iteration_instance.sor_iteration(
+            self.delta, self.omega
+        )
+        self.assertLess(
+            max_diff_hist[-1], 1e-5, "SOR iteration did not converge properly."
+        )
 
     def test_boundary_conditions(self):
         """Testing that boundary conditions remain unchanged."""
         grid_hist, _, _ = self.iteration_instance.sor_iteration(self.delta, self.omega)
-        self.assertTrue(np.all(np.isin(grid_hist[:, 0, :], [1])), "SOR iteration changed the top boundary condition.")
-        self.assertTrue(np.all(np.isin(grid_hist[:, -1, :], [0])), "SOR iteration changed the bottom boundary condition.")
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, 0, :], [1])),
+            "SOR iteration changed the top boundary condition.",
+        )
+        self.assertTrue(
+            np.all(np.isin(grid_hist[:, -1, :], [0])),
+            "SOR iteration changed the bottom boundary condition.",
+        )

@@ -1,11 +1,13 @@
 from typing import Optional
 
-import numpy as np
 import numba as nb
+import numpy as np
 
 
 @nb.njit
-def apply_sor_iter_step(old_grid: np.ndarray, omega: float, sink: Optional[np.ndarray]=None) -> (np.ndarray, float):
+def apply_sor_iter_step(
+    old_grid: np.ndarray, omega: float, sink: Optional[np.ndarray] = None
+) -> (np.ndarray, float):
     """
     Applies one Successive Over Relaxation iteration to an existing grid.
 
@@ -30,11 +32,17 @@ def apply_sor_iter_step(old_grid: np.ndarray, omega: float, sink: Optional[np.nd
             if sink is not None and sink[row_idx, col_idx]:
                 new_grid[row_idx, col_idx] = 0
             else:
-                new_grid[row_idx, col_idx] = (omega * 0.25 * (new_grid[row_idx - 1, col_idx]
-                                                              + new_grid[row_idx, (col_idx - 1) % new_grid.shape[1]]
-                                                              + new_grid[row_idx + 1, col_idx]
-                                                              + new_grid[row_idx, (col_idx + 1) % new_grid.shape[1]])
-                                              + (1 - omega) * old_grid[row_idx, col_idx])
+                new_grid[row_idx, col_idx] = (
+                    omega
+                    * 0.25
+                    * (
+                        new_grid[row_idx - 1, col_idx]
+                        + new_grid[row_idx, (col_idx - 1) % new_grid.shape[1]]
+                        + new_grid[row_idx + 1, col_idx]
+                        + new_grid[row_idx, (col_idx + 1) % new_grid.shape[1]]
+                    )
+                    + (1 - omega) * old_grid[row_idx, col_idx]
+                )
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
     max_cell_diff = np.max(np.abs(old_grid - new_grid))
