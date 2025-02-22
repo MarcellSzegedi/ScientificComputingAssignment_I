@@ -20,7 +20,7 @@ from scientific_computing.time_dependent_diffusion import (
 def test_grid_shape(time_steps, intervals, dt, D):
     assume(is_stable_scheme(dt, 1 / intervals, D))
     cylinder = Cylinder(spatial_intervals=intervals, diffusivity=D)
-    assert cylinder.grid.shape == (intervals, intervals)
+    assert cylinder.grid.shape == (intervals + 1, intervals)
 
 
 @given(
