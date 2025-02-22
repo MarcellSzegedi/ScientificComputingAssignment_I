@@ -10,8 +10,20 @@ def discretize_pde(
     case: Initialisation,
 ):
     """
-    Discretizes the second order vibration PDE in order to solve numerically.
-    :return: Computed wave grid over time.
+    Applies the finite difference method to discretize the
+    one-dimensional wave equation PDE over a given spatial and temporal grid.
+
+    :param spatial_intervals: Number of discrete spatial points.
+    :param temporal_intervals: Number of discrete time steps.
+    :param string_length: Total length of the string.
+    :param runtime: Total simulation time. Must be in the range [1, 1e10].
+    :param c: Wave propagation velocity. Must not exceed 1e10.
+    :param case: Initial conditions for the wave, defined by the `Initialisation` class.
+
+    :return: A 2D NumPy array representing the wave displacement over time.
+
+    :raises ValueError: If input parameters violate constraints (negative intervals,
+                        excessive runtime, or invalid Courant number).
     """
     if spatial_intervals < 1:
         raise ValueError(

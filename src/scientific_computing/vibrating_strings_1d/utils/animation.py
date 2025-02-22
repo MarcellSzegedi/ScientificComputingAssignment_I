@@ -15,8 +15,8 @@ def animate_wave(
     propagation_velocity: float = 1.0,
 ):
     """
-
-    :return:
+    Animates the propagation of a wave using a numerical solution to the wave equation.
+    :return: Animation object displaying wave evolution over time.
     """
     result = discretize_pde(
         spatial_intervals,
