@@ -29,7 +29,7 @@ def discretize_pde(
         raise ValueError(
             f"Spatial intervals must be at least 1, found {spatial_intervals}"
         )
-    if runtime < 1 or runtime > 1e10:
+    if runtime < 1e-2 or runtime > 1e10:
         raise ValueError(f"Runtime must be in range [1,1e10], found: {runtime}")
     if c > 1e10:
         raise ValueError(f"Propagation velocity exceeds allowable range: 1e10 < {c}")
