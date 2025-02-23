@@ -39,6 +39,24 @@ def test_is_stable_scheme(intervals, dt, D):
     dt=floats(min_value=0, max_value=1, allow_nan=False, allow_infinity=False),
     D=floats(min_value=0, allow_nan=False, allow_infinity=False),
 )
+def test_concentration_never_decreasing(time_steps, intervals, dt, D):
+    assume(is_stable_scheme(dt, 1 / intervals, D))
+    cylinder = Cylinder(intervals, diffusivity=D)
+    measurements = cylinder.measure_all(
+        run_time=time_steps, measure_every=1, dt=dt, mode=RunMode.Numba
+    )
+    measurements = np.asarray(measurements)
+    diffs = np.diff(measurements, axis=0)
+    assert diffs.min() >= 0
+
+
+@settings(deadline=None)
+@given(
+    intervals=integers(min_value=1, max_value=25),
+    time_steps=integers(min_value=1, max_value=1000),
+    dt=floats(min_value=0, max_value=1, allow_nan=False, allow_infinity=False),
+    D=floats(min_value=0, allow_nan=False, allow_infinity=False),
+)
 def test_numba_version_gives_same_results(time_steps, intervals, dt, D):
     assume(is_stable_scheme(dt, 1 / intervals, D))
     cylinder_python = Cylinder(intervals, diffusivity=D)
