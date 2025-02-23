@@ -78,6 +78,13 @@ uv run scicomp td-diffusion animate --intervals 50 --dt 0.0001 --mode numba --ti
 > [!IMPORTANT]
 > Insulators are only implemented in the Numba version.
 
+## Running tests
+To run the test suite:
+
+```bash
+uv run pytest
+```
+
 ## License
 
 [MIT](LICENSE.md)
