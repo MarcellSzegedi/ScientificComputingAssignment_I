@@ -9,7 +9,7 @@ from scientific_computing.stationary_diffusion.utils.grid_initialisation import 
 TOLERANCE = 1e-5
 
 
-def plot_max_cell_diff_measure(
+def plot_convergence_speed(
         jacobi_result: np.ndarray,
         gs_result: np.ndarray,
         sor_results: Dict[float, np.ndarray],
@@ -17,7 +17,7 @@ def plot_max_cell_diff_measure(
         save_dir: str
 ) -> None:
     max_iter_len = max([len(jacobi_result), len(gs_result)] + [len(sor_result) for sor_result in sor_results.values()])
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(10, 5))
 
     plt.plot(_calc_x_axis(jacobi_result), jacobi_result, label="Jacobi")
     plt.plot(_calc_x_axis(gs_result), gs_result, label="Gauss - Seidel")
@@ -33,12 +33,14 @@ def plot_max_cell_diff_measure(
              alpha=0.5
              )
 
-    plt.title("Maximum Difference Between Iteration Steps\nfor Different Iterative Methods",
+    plt.title("Maximum Stepwise Difference for Different Iterative Methods",
               fontsize=16,
               fontweight="bold")
-    plt.xlabel("Iteration Steps")
-    plt.ylabel("Maximum Difference Between Iterations")
-    plt.legend(fontsize=12)
+    plt.xlabel("Iteration Steps", fontsize=14)
+    plt.ylabel("Maximum Difference Between Iterations", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.legend(fontsize=13, title="Iteration Method", title_fontsize=13)
 
     plt.yscale("log")
 
@@ -58,14 +60,16 @@ def plot_delta_omega_connection(
         grid_size = calc_grid_size(delta)
         plt.plot(omega, results, label=f"{grid_size}")
 
-    plt.title("Iteration Steps to Convergence\nas a Function of Grid Size and SOR's 'ω' Parameter",
-              fontsize=16,
+    plt.title("Iteration Steps to Convergence\nas a Function of Grid Size\nand SOR's 'ω' Parameter",
+              fontsize=25,
               fontweight="bold")
-    plt.xlabel("Omega Parameter")
-    plt.ylabel("Number of Iterations Needed to Finish")
+    plt.xlabel("ω Parameter", fontsize=18)
+    plt.ylabel("Number of Iterations Needed to Finish", fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
 
-    plt.legend(fontsize=12, title="Grid Size")
+    plt.legend(fontsize=15, title="Grid Size", title_fontsize=15)
 
     plt.yscale("log")
 
@@ -80,7 +84,7 @@ def plot_convergence(
         file_name: str,
         save_dir: str
 ) -> None:
-    fig, ax = plt.subplots(1, 3, figsize=(30, 10))
+    fig, ax = plt.subplots(1, 3, figsize=(30, 6))
 
     # Jacobi
     jacobi_lines = []
@@ -116,13 +120,14 @@ def plot_convergence(
     ax[2].plot(np.linspace(0, sor_result.shape[1] - 1, 10), np.linspace(0, 1, 10), linestyle="--", color="black", linewidth=3, alpha=0.5)
 
     # Titles and labels
-    fig.suptitle(f"Heat Distribution along the Object for Various Iterations", fontsize=25, fontweight="bold")
-    ax[0].set_title("Jacobi Iteration", fontsize=20)
-    ax[1].set_title("Gauss-Seidel Iteration", fontsize=20)
-    ax[2].set_title("Successive Over Relaxation", fontsize=20)
+    fig.suptitle(f"Heat Distribution along the Object for Various Iterations", fontsize=18, fontweight="bold")
+    ax[0].set_title("Jacobi Iteration", fontsize=16)
+    ax[1].set_title("Gauss-Seidel Iteration", fontsize=16)
+    ax[2].set_title("Successive Over Relaxation Iteration", fontsize=16)
     for i in range(3):
-        ax[i].set_xlabel("Object Cut Along y Axis", fontsize=18)
-        ax[i].set_ylabel("Temperature", fontsize=18)
+        ax[i].set_xlabel("Object Cut Along 'y' Axis (Cell Coordinate)", fontsize=14)
+        ax[i].set_ylabel("Temperature", fontsize=14)
+        ax[i].tick_params(axis="both", labelsize=14)
 
     # Save and show
     plt.savefig(os.path.join(save_dir, file_name), dpi=500)
@@ -137,7 +142,7 @@ def plot_delta_omega_connection_with_sink(
 ) -> None:
 
     colors = ["red", "green", "blue", "purple", "yellow"]
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(10, 6))
     # Plot results without sink
     for idx, (delta, sor_result_collection) in enumerate(sor_results.items()):
         omega = list(sor_result_collection.keys())
@@ -152,15 +157,104 @@ def plot_delta_omega_connection_with_sink(
         grid_size = calc_grid_size(delta)
         plt.plot(omega, results, label=f"{grid_size}", color=colors[idx])
 
-    plt.title("Iteration Steps to Convergence\nas a Function of Grid Size and SOR's ω Parameter\n"
-              "(Dashed lines represent simulations without a sink,\nwhile solid lines represent those with a sink.)",
-              fontsize=18,
+    plt.title("Iteration Steps to Convergence\nas a Function of Grid Size and SOR's ω Parameter",
+              fontsize=16,
               fontweight="bold")
-    plt.xlabel("ω Parameter", fontsize=15)
-    plt.ylabel("Number of Iterations Needed to Finish", fontsize=15)
+    plt.xlabel("ω Parameter", fontsize=14)
+    plt.ylabel("Number of Iterations Needed to Finish", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
 
-    plt.legend(fontsize=12, title="Grid Size")
+    plt.legend(fontsize=13, title="Grid Size", title_fontsize=13, ncol=2)
+
+    plt.yscale("log")
+
+    plt.savefig(os.path.join(save_dir, file_name), dpi=500)
+    plt.show()
+
+
+def plot_convergence_speed_with_sink(
+        jac_res: np.ndarray,
+        gs_res: np.ndarray,
+        sor_res: Dict[float, np.ndarray],
+        jac_res_sink: np.ndarray,
+        gs_res_sink: np.ndarray,
+        sor_res_sink: Dict[float, np.ndarray],
+        file_name: str,
+        save_dir: str
+) -> None:
+    max_iter_len = max([len(jac_res), len(gs_res), len(jac_res_sink), len(gs_res_sink)]
+                       + [len(sor) for sor in sor_res.values()]
+                       + [len(sor) for sor in sor_res_sink.values()])
+    plt.figure(figsize=(10, 6))
+
+    sor_colors = ["green", "yellow", "magenta"]
+
+    plt.plot(_calc_x_axis(jac_res), jac_res, label="Jacobi", color="purple", linestyle="--")
+    plt.plot(_calc_x_axis(gs_res), gs_res, label="Gauss-Seidel", color="blue", linestyle="--")
+    plt.plot(_calc_x_axis(jac_res_sink), jac_res_sink, label="Jacobi (with Sink)", color="purple")
+    plt.plot(_calc_x_axis(gs_res_sink), gs_res_sink, label="Gauss-Seidel (with Sink)", color="blue")
+
+    for idx, (omega, sor) in enumerate(sor_res.items()):
+        plt.plot(_calc_x_axis(sor), sor, label=f"SOR ω: {omega:.2f}", color=sor_colors[idx], linestyle="--")
+
+    for idx, (omega, sor) in enumerate(sor_res_sink.items()):
+        plt.plot(_calc_x_axis(sor), sor, label=f"SOR ω: {omega:.2f} (with Sink)", color=sor_colors[idx])
+
+    plt.plot(np.arange(1, int((max_iter_len) * 1.1) + 1),
+             np.ones_like(np.arange(1, int((max_iter_len) * 1.1) + 1)) * TOLERANCE,
+             linestyle="--",
+             color="darkred",
+             linewidth=4,
+             alpha=0.5
+             )
+
+    plt.title("Maximum Stepwise Difference for Different Iterative Methods\nWith and Without Sink",
+              fontsize=16,
+              fontweight="bold")
+    plt.xlabel("Iteration Steps", fontsize=14)
+    plt.ylabel("Maximum Difference Between Iterations", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.legend(fontsize=13, title="Iteration Method", title_fontsize=13, ncol=2)
+
+    plt.yscale("log")
+
+    plt.savefig(os.path.join(save_dir, file_name), dpi=500)
+    plt.show()
+
+
+def plot_convergence_diff_sinks(
+        results: Dict[float, np.ndarray],
+        file_name: str,
+        save_dir: str
+) -> None:
+    max_iter_len = max([len(sor_result) for sor_result in results.values()])
+    plt.figure(figsize=(10, 5))
+
+    plt.plot(_calc_x_axis(results[0]), results[0], label="No Sink")
+    del results[0]
+
+    for width, result in results.items():
+        plt.plot(_calc_x_axis(result), result, label=f"{int(width * 100)} %")
+
+    plt.plot(np.arange(1, int((max_iter_len) * 1.1) + 1),
+             np.ones_like(np.arange(1, int((max_iter_len) * 1.1) + 1)) * TOLERANCE,
+             linestyle="--",
+             color="darkred",
+             linewidth=4,
+             alpha=0.5
+             )
+
+    plt.title("Maximum Stepwise Difference for Different Sink Widths\nUsing Gauss - Seidel approach with N=100",
+              fontsize=16,
+              fontweight="bold")
+    plt.xlabel("Iteration Steps", fontsize=14)
+    plt.ylabel("Maximum Difference Between Iterations", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.legend(fontsize=13, title="Sink Width", title_fontsize=13)
 
     plt.yscale("log")
 
