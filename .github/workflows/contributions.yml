@@ -45,5 +45,7 @@ jobs:
       - name: Export PDF
         uses: actions/upload-artifact@v4
         with:
-          name: git_fame_results
+          name: effort_distribution.pdf
           path: reports/effort_distribution.pdf
+          if-no-files-found: error
+          retention-days: 7
