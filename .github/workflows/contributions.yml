@@ -1,0 +1,48 @@
+name: Effort distribution
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate-distribution:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.0"
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
+      - name: Compute distribution
+        run: |
+          uvx git-fame
+          uvx git-fame --excl "uv.lock,assignment_spec.pdf,LICENSE.md,README.md,pyproject.toml,.gitignore,.pre-commit-config.yaml" --no-regex -M -C --format csv > reports/git_fame_output.csv
+
+      - name: Split into detailed and summary
+        run: |
+          head -n $(( $(wc -l reports/git_fame_output.csv | awk '{print $1}') - 3 )) reports/git_fame_output.csv > reports/git_fame_detailed.csv
+          tail -n 2 reports/git_fame_output.csv > reports/git_fame_summary.csv
+
+      - name: Record datetime
+        run: |
+          echo "{\"datetime\": \"$(TZ=CET date)\"}" > reports/effort_distribution.json
+
+      - name: Compile PDF
+        run: |
+          typst compile reports/effort_distribution.typ
+
+      - name: Export PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: effort_distribution
+          path: reports/effort_distribution.pdf
