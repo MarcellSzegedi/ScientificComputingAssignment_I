@@ -10,6 +10,7 @@ from .utils.time_dependent_diffusion import (
 from .utils.time_dependent_diffusion import (
     RunMode as RunMode,
 )
+from .utils.time_dependent_diffusion import analytical_solution as analytical_solution
 from .utils.time_dependent_diffusion import (
     is_stable_scheme as is_stable_scheme,
 )

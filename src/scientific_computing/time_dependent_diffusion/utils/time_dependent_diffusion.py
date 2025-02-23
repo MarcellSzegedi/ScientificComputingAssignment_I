@@ -523,7 +523,14 @@ def plot_solution_comparison(
     y_range = np.linspace(0, 1, intervals + 1)
     D = 1
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+    fig, axes = plt.subplots(
+        2,
+        2,
+        figsize=(8, 5),
+        sharex=True,
+        sharey=True,
+        layout="constrained",
+    )
     axes = axes.flatten()
 
     cylinder = Cylinder(spatial_intervals=intervals, diffusivity=D)
@@ -546,10 +553,13 @@ def plot_solution_comparison(
         )
         ax.plot(y_range, simulation_result_y, label=f"Simulation (t={t})", color="blue")
         ax.set_title(f"Diffusion Profile at t={t}")
-        ax.set_xlabel("y")
-        ax.set_ylabel("Concentration (c)")
+        # ax.set_xlabel("y")
+        # ax.set_ylabel("Concentration (c)")
         ax.legend()
-    plt.show()
+    fig.supxlabel(r"y")
+    fig.supylabel("Concentration")
+
+    return fig
 
 
 def is_stable_scheme(dt: float, dx: float, diffusivity: float) -> bool:
