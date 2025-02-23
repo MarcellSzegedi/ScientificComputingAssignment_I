@@ -30,7 +30,9 @@ class Cylinder:
         sinks: DomainObjects | None = None,
         insulators: DomainObjects | None = None,
     ):
-        self.grid = np.zeros((spatial_intervals, spatial_intervals), dtype=np.float64)
+        self.grid = np.zeros(
+            (spatial_intervals + 1, spatial_intervals), dtype=np.float64
+        )
         self.grid[0] = 1.0
         self.dx = 1 / spatial_intervals
         self.diffusivity = diffusivity
@@ -100,7 +102,7 @@ class Cylinder:
             case RunMode.Rust:
                 self.grid = td_diffusion_cylinder(
                     [n_iters],
-                    intervals=self.grid.shape[0],
+                    intervals=self.grid.shape[1],
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
@@ -136,7 +138,7 @@ class Cylinder:
             case RunMode.Rust:
                 measurements = td_diffusion_cylinder(
                     list(measurement_idxes),
-                    intervals=self.grid.shape[0],
+                    intervals=self.grid.shape[1],
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
@@ -183,7 +185,7 @@ class Cylinder:
             case RunMode.Rust:
                 measurements = td_diffusion_cylinder(
                     list(np.arange(0, run_time + 1, measure_every)),
-                    intervals=self.grid.shape[0],
+                    intervals=self.grid.shape[1],
                     dt=dt,
                     diffusivity=self.diffusivity,
                     rect_sinks=self.rectangle_sinks[1:],
@@ -515,7 +517,7 @@ def plot_solution_comparison(
     that compares the analytical solution of the concentration profile and
     the simulated solution of the concentration profile.
     """
-    y_range = np.linspace(0, 1, intervals)
+    y_range = np.linspace(0, 1, intervals + 1)
     D = 1
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))

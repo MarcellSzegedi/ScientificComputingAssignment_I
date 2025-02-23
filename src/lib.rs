@@ -45,8 +45,8 @@ pub struct Cylinder {
 
 impl Cylinder {
     fn new(intervals: usize, rect_sinks: Vec<Vec<usize>>) -> Self {
-        let mut grid = Array2::zeros((intervals, intervals));
-        let buffer = Array2::zeros((intervals, intervals));
+        let mut grid = Array2::zeros((intervals + 1, intervals));
+        let buffer = Array2::zeros((intervals + 1, intervals));
         grid.row_mut(0).fill(1.0);
         let rect_sinks = {
             let parsed_rect_sinks: Result<Vec<Rectangle>, _> =
@@ -60,8 +60,6 @@ impl Cylinder {
                 .then_some(valid_structure_sinks)
                 .expect("Some rectangles had invalid definition.")
         };
-        //let rect_sinks: Result<Vec<Rectangle>, _> =
-        //    rect_sinks.into_iter().map(|r| r.try_into()).collect();
 
         Self {
             grid,
@@ -73,7 +71,7 @@ impl Cylinder {
 
     fn update(&mut self, dx: f64, dt: f64, diffusivity: f64) {
         let diffusion_coeff = dt * diffusivity / (dx * dx);
-        for row in 1..(self.intervals - 1) {
+        for row in 1..(self.intervals) {
             for col in 0..self.intervals {
                 let neighbor_concentration_diff = {
                     self.grid[(row + 1, col)]
@@ -96,7 +94,7 @@ impl Cylinder {
             }
         }
 
-        for row in 1..(self.intervals - 1) {
+        for row in 1..(self.intervals) {
             for col in 0..self.intervals {
                 self.grid[(row, col)] = self.buffer[(row, col)]
             }
