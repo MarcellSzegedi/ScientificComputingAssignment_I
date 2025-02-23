@@ -45,7 +45,5 @@ jobs:
       - name: Export PDF
         uses: actions/upload-artifact@v4
         with:
-          name: effort_distribution.pdf
+          name: effort_distribution
           path: reports/effort_distribution.pdf
-          if-no-files-found: error
-          retention-days: 7
