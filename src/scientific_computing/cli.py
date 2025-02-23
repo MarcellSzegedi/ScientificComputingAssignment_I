@@ -525,7 +525,7 @@ def compare_simulation_to_analytical(
     measurement_times = measurement_times or [0.001, 0.01, 0.1, 1.0]
     fig = plot_solution_comparison(dt, measurement_times, intervals, terms, mode)
     if save_path:
-        fig.savefig(save_path, dpi=DPI)
+        fig.savefig(save_path, dpi=500, bbox_inches="tight")
     else:
         plt.show()
 

@@ -526,7 +526,7 @@ def plot_solution_comparison(
     fig, axes = plt.subplots(
         2,
         2,
-        figsize=(8, 5),
+        figsize=(6, 4),
         sharex=True,
         sharey=True,
         layout="constrained",
@@ -556,6 +556,7 @@ def plot_solution_comparison(
         # ax.set_xlabel("y")
         # ax.set_ylabel("Concentration (c)")
         ax.legend()
+
     fig.supxlabel(r"y")
     fig.supylabel("Concentration")
 
