@@ -36,7 +36,7 @@ jobs:
 
       - name: Record datetime
         run: |
-          echo "{\"datetime\": \"$(date)\"}" > reports/effort_distribution.json
+          echo "{\"datetime\": \"$(TZ=CET date)\"}" > reports/effort_distribution.json
 
       - name: Compile PDF
         run: |
