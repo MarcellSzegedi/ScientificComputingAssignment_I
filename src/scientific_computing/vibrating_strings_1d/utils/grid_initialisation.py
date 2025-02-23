@@ -8,6 +8,15 @@ class Initialisation(StrEnum):
     HighFreq = "high-freq"
     BoundedHighFreq = "bounded-high-freq"
 
+    def as_equation_str(self) -> str:
+        match self:
+            case Initialisation.LowFreq:
+                return r"$\Psi(x, t=0) = \sin(2\pi x)$"
+            case Initialisation.HighFreq:
+                return r"$\Psi(x, t=0) = \sin(5\pi x)$"
+            case Initialisation.BoundedHighFreq:
+                return r"$\Psi(1/5 < x < 2/5) = \sin(5\pi x)$"
+
 
 def initialize_string(
     spatial_intervals: int, case: Initialisation, string_length: int = 1

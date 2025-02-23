@@ -52,7 +52,7 @@ def test_max_amplitude_always_at_most_initial_max(
 
 def test_string_simulation_raises_on_short_runtime():
     with pytest.raises(ValueError):
-        discretize_pde(50, 100, 1, 0.99, c=1.0, case=Initialisation.LowFreq)
+        discretize_pde(50, 100, 1, 1e-6, c=1.0, case=Initialisation.LowFreq)
 
 
 def test_string_simulation_raises_on_zero_intervals():

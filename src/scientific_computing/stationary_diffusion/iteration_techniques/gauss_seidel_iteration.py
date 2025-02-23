@@ -1,20 +1,28 @@
 import logging
 from typing import Optional
 
-import numpy as np
 import numba as nb
+import numpy as np
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+from scientific_computing.stationary_diffusion.utils.common_functions import (
+    check_new_grid,
+)
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 @nb.njit
-def apply_gauss_seidel_iter_step(old_grid: np.ndarray, sink: Optional[np.ndarray]=None) -> [np.ndarray, float]:
+def apply_gauss_seidel_iter_step(
+    old_grid: np.ndarray, sink: Optional[np.ndarray] = None
+) -> [np.ndarray, float]:
     """
     Applies one Gauss Seidel iteration to an existing grid.
 
     Args:
-        old_grid: Existing grid (2D numpy array) where every cell value represents a delta
-                    step in the discretised square field with side interval [0, 1].
+        old_grid: Existing grid (2D numpy array) where every cell value represents a
+            delta step in the discretised square field with side interval [0, 1].
         sink:
 
     Returns:
@@ -31,10 +39,12 @@ def apply_gauss_seidel_iter_step(old_grid: np.ndarray, sink: Optional[np.ndarray
             if sink is not None and sink[row_idx, col_idx]:
                 new_grid[row_idx, col_idx] = 0
             else:
-                new_grid[row_idx, col_idx] = 0.25 * (new_grid[row_idx - 1, col_idx]
-                                                     + new_grid[row_idx, (col_idx - 1) % new_grid.shape[1]]
-                                                     + new_grid[row_idx + 1, col_idx]
-                                                     + new_grid[row_idx, (col_idx + 1) % new_grid.shape[1]])
+                new_grid[row_idx, col_idx] = 0.25 * (
+                    new_grid[row_idx - 1, col_idx]
+                    + new_grid[row_idx, (col_idx - 1) % new_grid.shape[1]]
+                    + new_grid[row_idx + 1, col_idx]
+                    + new_grid[row_idx, (col_idx + 1) % new_grid.shape[1]]
+                )
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
     max_cell_diff = float(np.max(np.abs(old_grid - new_grid)))

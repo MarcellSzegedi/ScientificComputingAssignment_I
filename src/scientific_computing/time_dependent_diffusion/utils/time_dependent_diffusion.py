@@ -216,7 +216,7 @@ class Cylinder:
         epsilon: float = 1e-2,
         max_iters: int = 100000,
         mode: RunMode = RunMode.Numba,
-    ):
+    ) -> int | None:
         match mode:
             case RunMode.Numba:
                 update = jacobi_update_numba
@@ -230,18 +230,19 @@ class Cylinder:
         while diff > epsilon and iters < max_iters:
             new_grid, diff = update(new_grid, buffer, self.rectangle_sinks)
             iters += 1
-        if iters < max_iters:
-            print(f"Converged after {iters} iterations.")
-        else:
-            print(f"Terminated early after {iters} iterations.")
+
+        if diff > epsilon:
+            iters += 1
+
         self.grid = new_grid
+        return iters if iters <= max_iters else None
 
     def solve_gauss_seidel(
         self,
         epsilon: float = 1e-2,
         max_iters: int = 100000,
         mode: RunMode = RunMode.Numba,
-    ):
+    ) -> int | None:
         match mode:
             case RunMode.Numba:
                 update = gauss_seidel_update_numba
@@ -254,11 +255,12 @@ class Cylinder:
         while diff > epsilon and iters < max_iters:
             new_grid, diff = update(new_grid, self.rectangle_sinks)
             iters += 1
-        if iters < max_iters:
-            print(f"Converged after {iters} iterations.")
-        else:
-            print(f"Terminated early after {iters} iterations.")
+
+        if diff > epsilon:
+            iters += 1
+
         self.grid = new_grid
+        return iters if iters <= max_iters else None
 
     def solve_sor(
         self,
@@ -266,7 +268,7 @@ class Cylinder:
         epsilon: float = 1e-2,
         max_iters: int = 100000,
         mode: RunMode = RunMode.Numba,
-    ):
+    ) -> int | None:
         match mode:
             case RunMode.Numba:
                 update = sor_update_numba
@@ -279,11 +281,12 @@ class Cylinder:
         while diff > epsilon and iters < max_iters:
             new_grid, diff = update(new_grid, omega, self.rectangle_sinks)
             iters += 1
-        if iters < max_iters:
-            print(f"Converged after {iters} iterations.")
-        else:
-            print(f"Terminated early after {iters} iterations.")
+
+        if diff > epsilon:
+            iters += 1
+
         self.grid = new_grid
+        return iters if iters <= max_iters else None
 
 
 @njit

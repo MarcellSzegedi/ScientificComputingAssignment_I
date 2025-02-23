@@ -3,7 +3,9 @@ from typing import Annotated
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import typer
+from tqdm import tqdm
 
 from scientific_computing.time_dependent_diffusion import (
     Cylinder,
@@ -20,7 +22,32 @@ from scientific_computing.vibrating_strings_1d.utils.grid_initialisation import 
     Initialisation,
 )
 
-DPI = 500
+FONT_SIZE_TINY = 7
+FONT_SIZE_SMALL = 8
+FONT_SIZE_DEFAULT = 10
+FONT_SIZE_LARGE = 12
+
+plt.rc("font", family="Georgia")
+plt.rc("font", weight="normal")  # controls default font
+plt.rc("mathtext", fontset="stix")
+plt.rc("font", size=FONT_SIZE_DEFAULT)  # controls default text sizes
+plt.rc("axes", titlesize=FONT_SIZE_DEFAULT)  # fontsize of the axes title
+plt.rc("axes", labelsize=FONT_SIZE_DEFAULT)  # fontsize of the x and y labels
+plt.rc("figure", labelsize=FONT_SIZE_DEFAULT)
+
+sns.set_context(
+    "paper",
+    rc={
+        "axes.linewidth": 0.5,
+        "axes.labelsize": FONT_SIZE_LARGE,
+        "axes.titlesize": FONT_SIZE_DEFAULT,
+        "xtick.major.width": 0.5,
+        "ytick.major.width": 0.5,
+        "ytick.minor.width": 0.4,
+        "xtick.labelsize": FONT_SIZE_SMALL,
+        "ytick.labelsize": FONT_SIZE_SMALL,
+    },
+)
 
 app = typer.Typer(
     rich_markup_mode="rich",
@@ -77,9 +104,6 @@ def plot_vibrating_string(
     length: Annotated[
         int, typer.Option("--length", "-s", help="Length of the string (L).")
     ] = 1,
-    initialisation: Annotated[
-        Initialisation, typer.Option("--init", "-i", help="Initial conditions.")
-    ] = Initialisation.LowFreq,
     dt: Annotated[
         float,
         typer.Option(help="Step size in temporal dimension.", min=1e-6),
@@ -107,26 +131,39 @@ def plot_vibrating_string(
     spatial_intervals = int(length / dx)
     timesteps = max(measurements) + 1
     runtime = timesteps * dt
-    result = discretize_pde(
-        spatial_intervals, timesteps, length, runtime, velocity, initialisation
-    )
 
-    fig, ax = plt.subplots(figsize=(8, 5), layout="constrained")
-    string_points = np.linspace(0, length, spatial_intervals + 1)
-    for frame in measurements:
-        ax.plot(string_points, result[frame], label=f"t={frame * dt:.2f}")
-    ax.set_xlabel(r"$x$")
-    ax.set_ylabel(r"$\Psi(x, t)$")
-    ax.set_title(
-        f"1D wave amplitude at varying times, c={velocity:.2f}, "
-        f"{initialisation} initialisation"
+    fig, axes = plt.subplots(
+        3, 1, figsize=(2.8, 3), layout="constrained", sharex=True, sharey=True
     )
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.legend()
+    string_points = np.linspace(0, length, spatial_intervals + 1)
+    for init, ax in zip(Initialisation, axes.flatten(), strict=True):
+        result = discretize_pde(
+            spatial_intervals,
+            timesteps,
+            length,
+            runtime,
+            velocity,
+            init,
+        )
+
+        for frame in measurements:
+            ax.plot(string_points, result[frame], label=f"t={frame * dt:.2f}")
+
+        ax.set_xlim(0, 1)
+        ax.set_ylabel(r"$\Psi(x;t)$")
+        ax.set_title(init.as_equation_str())
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    fig.supxlabel(r"$x$")
+    fig.legend(
+        [r"$t=$" + f"{m * dt:.2f}" for m in measurements],
+        loc="center left",
+        bbox_to_anchor=(1, 0.5),
+    )
 
     if save_path:
-        fig.savefig(save_path, dpi=500)
+        fig.savefig(save_path, dpi=500, bbox_inches="tight")
     else:
         plt.show()
 
@@ -228,7 +265,8 @@ def jacobi(
 ):
     sinks = parse_rect_sinks(rectangle_sinks)
     cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
-    cylinder.solve_jacobi(epsilon=epsilon, max_iters=max_iters)
+    iters = cylinder.solve_jacobi(epsilon=epsilon, max_iters=max_iters)
+    print(f"Converged in {iters} iterations" if iters else "Didn't converge")
     plt.imshow(cylinder.grid)
     plt.show()
 
@@ -258,7 +296,8 @@ def gauss_seidel(
 ):
     sinks = parse_rect_sinks(rectangle_sinks)
     cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
-    cylinder.solve_gauss_seidel(epsilon=epsilon, max_iters=max_iters)
+    iters = cylinder.solve_gauss_seidel(epsilon=epsilon, max_iters=max_iters)
+    print(f"Converged in {iters} iterations" if iters else "Didn't converge")
     plt.imshow(cylinder.grid)
     plt.show()
 
@@ -283,7 +322,7 @@ def sor(
     epsilon: Annotated[
         float,
         typer.Option("--epsilon", "-e", help="Convergence threshold."),
-    ] = 1e-6,
+    ] = 1e-5,
     max_iters: Annotated[
         int,
         typer.Option("--max-iters", help="Maximum iterations before termination."),
@@ -295,8 +334,68 @@ def sor(
 ):
     sinks = parse_rect_sinks(rectangle_sinks)
     cylinder = Cylinder(spatial_intervals=n, diffusivity=diffusivity, sinks=sinks)
-    cylinder.solve_sor(omega=omega, epsilon=epsilon, max_iters=max_iters)
+    iters = cylinder.solve_sor(omega=omega, epsilon=epsilon, max_iters=max_iters)
+    print(f"Converged in {iters} iterations" if iters else "Didn't converge")
     plt.imshow(cylinder.grid)
+    plt.show()
+
+
+@td_diffusion.command()
+def optimal_sor(
+    min_omega: Annotated[
+        float, typer.Option("--min-omega", help="Minimum omega to test")
+    ],
+    max_omega: Annotated[
+        float, typer.Option("--max-omega", help="Maximum omega to test")
+    ],
+    n_omegas: Annotated[
+        int, typer.Option("--n-omega", help="Number of omega values to test")
+    ],
+    grid_sizes: Annotated[list[int], typer.Option("-n", help="Grid sizes to test")],
+    diffusivity: Annotated[
+        float,
+        typer.Option("--diffusivity", "-d", help="Diffusivity coefficient"),
+    ] = 1.0,
+    epsilon: Annotated[
+        float,
+        typer.Option("--epsilon", "-e", help="Convergence threshold."),
+    ] = 1e-6,
+    max_iters: Annotated[
+        int,
+        typer.Option("--max-iters", help="Maximum iterations before termination."),
+    ] = 100_000,
+    rectangle_sinks: Annotated[
+        list[str] | None,
+        typer.Option("--sink-rect", help="Location of a rectangular sink: 'x y w h'."),
+    ] = None,
+):
+    sinks = parse_rect_sinks(rectangle_sinks)
+    omega_range = np.linspace(min_omega, max_omega, n_omegas)
+    results = []
+    with tqdm(total=len(grid_sizes) * n_omegas) as bar:
+        for grid_size in grid_sizes:
+            iters_till_convergence = []
+            for w in omega_range:
+                cylinder = Cylinder(
+                    spatial_intervals=grid_size, diffusivity=diffusivity, sinks=sinks
+                )
+                iters = cylinder.solve_sor(
+                    omega=w, epsilon=epsilon, max_iters=max_iters
+                )
+                iters_till_convergence.append(iters)
+                bar.update()
+            results.append(iters_till_convergence)
+
+    fig, ax = plt.subplots(layout="constrained")
+    for i, grid_size in enumerate(grid_sizes):
+        ax.plot(omega_range, results[i], label=str(grid_size))
+
+    ax.legend()
+    ax.set_title(
+        r"Number of iterations till convergence for varying grid size and $\omega$"
+    )
+    ax.set_xlabel(r"$\omega$")
+    ax.set_ylabel("Iterations till convergence")
     plt.show()
 
 
@@ -366,14 +465,20 @@ def plot_timesteps(
     )
     grids = cylinder.measure(measurement_times=measurement_times, dt=dt, mode=mode)
 
-    ncol = 2
+    ncol = 5
     nrow = len(measurement_times) // ncol + len(measurement_times) % ncol
-    fig, axes = plt.subplots(nrow, ncol, layout="constrained", sharex=True, sharey=True)
-    for grid, ax in zip(grids, axes.flatten(), strict=True):
-        ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
+    fig, axes = plt.subplots(
+        nrow, ncol, figsize=(6.5, 3), layout="constrained", sharex=True, sharey=True
+    )
+    for i, (grid, ax) in enumerate(zip(grids, axes.flatten(), strict=False)):
+        heatmap = ax.imshow(grid, extent=[0, width, 0, width], vmin=0, vmax=1)
+        ax.set_title(r"$t=$ " + str(measurement_times[i]))
+        ax.set_xlabel(r"$x$")
+    axes[0].set_ylabel(r"$y$")
+    fig.colorbar(heatmap, ax=axes[-1], shrink=0.3)
 
     if save_path:
-        fig.savefig(save_path, dpi=DPI)
+        fig.savefig(save_path, bbox_inches="tight")
     else:
         plt.show()
 

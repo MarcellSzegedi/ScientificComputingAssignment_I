@@ -1,11 +1,13 @@
 from typing import Optional
 
-import numpy as np
 import numba as nb
+import numpy as np
 
 
 @nb.njit
-def apply_jacobi_iter_step(old_grid: np.ndarray, sink: Optional[np.ndarray]=None) -> (np.ndarray, float):
+def apply_jacobi_iter_step(
+    old_grid: np.ndarray, sink: Optional[np.ndarray] = None
+) -> (np.ndarray, float):
     """
     Applies one Jacobi iteration to an existing grid.
 
@@ -29,12 +31,14 @@ def apply_jacobi_iter_step(old_grid: np.ndarray, sink: Optional[np.ndarray]=None
             if sink is not None and sink[row_idx, col_idx]:
                 new_grid[row_idx, col_idx] = 0
             else:
-                new_grid[row_idx, col_idx] = 0.25 * (old_grid[row_idx - 1, col_idx]
-                                                     + old_grid[row_idx, (col_idx - 1) % old_grid.shape[1]]
-                                                     + old_grid[row_idx + 1, col_idx]
-                                                     + old_grid[row_idx, (col_idx + 1) % new_grid.shape[1]])
+                new_grid[row_idx, col_idx] = 0.25 * (
+                    old_grid[row_idx - 1, col_idx]
+                    + old_grid[row_idx, (col_idx - 1) % old_grid.shape[1]]
+                    + old_grid[row_idx + 1, col_idx]
+                    + old_grid[row_idx, (col_idx + 1) % new_grid.shape[1]]
+                )
 
     # Calculate the maximum deviation between grid cell values at 't+1' and 't'
     max_cell_diff = np.max(np.abs(old_grid - new_grid))
-                
+
     return new_grid, max_cell_diff
