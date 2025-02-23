@@ -407,10 +407,22 @@ def compare_simulation_to_analytical(
         RunMode,
         typer.Option(help="Simulation mode."),
     ] = RunMode.Numba,
+    save_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--save-path",
+            "-o",
+            help="Filepath to save plot to (including extension)",
+        ),
+    ] = None,
 ):
     """Plot simulation vs analytical solution for time dependent diffusion."""
     measurement_times = measurement_times or [0.001, 0.01, 0.1, 1.0]
-    plot_solution_comparison(dt, measurement_times, intervals, terms, mode)
+    fig = plot_solution_comparison(dt, measurement_times, intervals, terms, mode)
+    if save_path:
+        fig.savefig(save_path, dpi=DPI)
+    else:
+        plt.show()
 
 
 @td_diffusion.command(name="animate")
