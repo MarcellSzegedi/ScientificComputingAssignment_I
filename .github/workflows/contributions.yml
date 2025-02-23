@@ -22,7 +22,9 @@ jobs:
         uses: typst-community/setup-typst@v4
 
       - name: Compute distribution
-        run: uvx git-fame --excl "uv.lock,assignment_spec.pdf,LICENSE.md,README.md,pyproject.toml,.gitignore,.pre-commit-config.yaml" --no-regex -M -C --format csv > reports/git_fame_output.csv
+        run: |
+          uvx git-fame
+          uvx git-fame --excl "uv.lock,assignment_spec.pdf,LICENSE.md,README.md,pyproject.toml,.gitignore,.pre-commit-config.yaml" --no-regex -M -C --format csv > reports/git_fame_output.csv
 
       - name: Split into detailed and summary
         run: |
