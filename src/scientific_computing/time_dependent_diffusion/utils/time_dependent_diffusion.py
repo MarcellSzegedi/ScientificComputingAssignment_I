@@ -396,6 +396,21 @@ def one_step_diffusion_numba(
     rectangle_sinks,
     rectangle_ins,
 ):
+    """
+    Performs one step of diffusion on the grid using Numba for parallelising.
+
+    :params grid: 2D array of concentrations at the current time step.
+    :params buffer: 2D array to store updated concentrations during diffusion.
+    :params dt: Time step for the diffusion process.
+    :params dx: Spatial step size in each direction.
+    :params D: Diffusion coefficient.
+    :params rectangle_sinks: List of rectangular regions where concentration
+                            is set to 0 (sinks).
+    :params rectangle_ins: List of rectangular regions where flux
+                            of diffusion is 0 (insulators).
+
+    :returns: Updated grid after performing one diffusion step.
+    """
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):
         for j in range(0, grid.shape[1]):
@@ -439,6 +454,12 @@ def one_step_diffusion(
     rectangle_sinks: list[tuple[int, int, int, int]],
     rectangle_ins: list[tuple[int, int, int, int]],
 ):
+    """
+    Performs one step of the diffusion process on a discretised grid,
+    updating the grid based on the diffusion equation.
+
+    :returns: Updated grid after performing one diffusion step.
+    """
     diffusion_coeff = (dt * D) / (dx**2)
     for i in range(1, grid.shape[0] - 1):
         for j in range(0, grid.shape[1]):
@@ -461,6 +482,16 @@ def one_step_diffusion(
 
 
 def analytical_solution(y: float, D: float, t: float, terms: int):
+    """
+    Computes the given analytical solution for the time-dependent diffusion equation.
+
+    :param y: The x axis of the analytical solution.
+    :param D: The diffusion coefficient.
+    :param t: The time at which the measurements are taken (0.001, 0.01, 0.1, 1).
+    :param terms: The number of terms used to compute the solution.
+
+    :return: The analytical solution of the concentration profile as a function of y.
+    """
     solution = 0
     for i in range(terms):
         arg1 = (1 - y + 2 * i) / (2 * np.sqrt(D * t))
@@ -476,6 +507,14 @@ def plot_solution_comparison(
     terms: int,
     mode: RunMode = RunMode.Python,
 ):
+    """
+    Plots the concentration profile comparison between the simulated
+    and analytical solutions of the diffusion equation.
+
+    :return: Four plots at each time instance (t = 0.001, 0.01, 0.1, and 1)
+    that compares the analytical solution of the concentration profile and
+    the simulated solution of the concentration profile.
+    """
     y_range = np.linspace(0, 1, intervals)
     D = 1
 
