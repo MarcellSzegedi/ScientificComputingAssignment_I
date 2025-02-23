@@ -17,7 +17,10 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: "0.6.0"
-      
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
       - name: Compute distribution
         run: uvx git-fame --excl "uv.lock,assignment_spec.pdf,LICENSE.md,README.md,pyproject.toml,.gitignore,.pre-commit-config.yaml" --no-regex -M -C --format csv > reports/git_fame_output.csv
 
@@ -31,7 +34,6 @@ jobs:
           echo "{\"datetime\": \"$(date)\"}" > reports/effort_distribution.json
 
       - name: Compile PDF
-        uses: typst-community/setup-typst@v4
         run: |
           typst compile reports/effort_distribution.typ
 
