@@ -44,7 +44,7 @@ Animate the vibrating string. Case is either low-freq, high-freq, or bounded-hig
 uv run scicomp string1d animate -si 50 -ti 100 -t 1 -s 1 --case [CASE]
 ```
 
-### 2D diffusion experiments
+### 2D time-dependent diffusion experiments
 Compare time-dependent diffusion with analytic solution:
 
 ```bash
@@ -77,6 +77,14 @@ uv run scicomp td-diffusion animate --intervals 50 --dt 0.0001 --mode numba --ti
 
 > [!IMPORTANT]
 > Insulators are only implemented in the Numba version.
+
+
+### 2D time-independent diffusion experiments
+The results from these experiments are generated from a script. Please note that the script takes 30-60min to run.
+
+```bash
+uv run src/scientific_computing/stationary_diffusion/main.py
+```
 
 ## Running tests
 To run the test suite:
