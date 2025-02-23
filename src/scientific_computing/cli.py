@@ -133,7 +133,7 @@ def plot_vibrating_string(
     runtime = timesteps * dt
 
     fig, axes = plt.subplots(
-        3, 1, figsize=(2.8, 4), layout="constrained", sharex=True, sharey=True
+        3, 1, figsize=(2.8, 3), layout="constrained", sharex=True, sharey=True
     )
     string_points = np.linspace(0, length, spatial_intervals + 1)
     for init, ax in zip(Initialisation, axes.flatten(), strict=True):
