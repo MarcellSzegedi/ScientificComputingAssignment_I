@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis.strategies import floats, integers, sampled_from
@@ -46,7 +47,7 @@ def test_max_amplitude_always_at_most_initial_max(
         c=propagation_velocity,
         case=Initialisation.LowFreq,
     )
-    assert states[0].max() == pytest.approx(states.max(), abs=1e-12)
+    assert np.abs(states[0]).max() == pytest.approx(np.abs(states).max(), abs=1e-12)
 
 
 def test_string_simulation_raises_on_short_runtime():
